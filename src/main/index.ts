@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { setupWindowEvents } from './events/windowEvents'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -17,6 +18,7 @@ function createWindow(): void {
       webviewTag: false
     }
   })
+  setupWindowEvents(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()

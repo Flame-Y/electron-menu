@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Versions from './components/Versions.vue'
-
+import TitleBar from './components/TitleBar.vue'
 defineOptions({
   name: 'App'
 })
@@ -9,7 +9,8 @@ const ipcHandle = () => window.electron.ipcRenderer.send('ping')
 </script>
 
 <template>
-  <img alt="logo" class="logo" src="./assets/electron.svg" style="-webkit-app-region: no-drag" />
+  <TitleBar />
+  <img alt="logo" class="logo no-drag" src="./assets/electron.svg" />
   <div class="creator">Powered by electron-vite</div>
   <div id="test" class="text">
     Build an Electron app with
