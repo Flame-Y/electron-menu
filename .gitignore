@@ -4,3 +4,4 @@ out
 .DS_Store
 *.log*
 .npmrc
+resources/Release/Logs/log.txt
