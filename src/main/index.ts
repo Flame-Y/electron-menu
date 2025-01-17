@@ -6,6 +6,9 @@ import { setupWindowEvents } from './events/windowEvents'
 import appSearch from '../core/app-search'
 import path from 'path'
 import os from 'os'
+import { pluginManager } from './browser/plugin-manager'
+import { setupPluginEvents } from './events/pluginEvents'
+import { pluginConfig } from '../renderer/plugins/config'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -40,6 +43,17 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  // 初始化插件管理器
+  pluginManager.init(mainWindow)
+
+  // 立即注册插件
+  pluginConfig.forEach((plugin) => {
+    pluginManager.registerPlugin(plugin)
+  })
+
+  // 设置插件事件
+  setupPluginEvents()
 }
 
 // 当 Electron 完成初始化并准备创建浏览器窗口时调用此方法

@@ -2,6 +2,7 @@
 import Versions from './components/Versions.vue'
 import TitleBar from './components/TitleBar.vue'
 import AppSearch from './components/AppSearch.vue'
+import PluginContainer from './components/PluginContainer.vue'
 import wavyLines from './assets/wavy-lines.svg'
 
 defineOptions({
@@ -18,6 +19,7 @@ const ipcHandle = () => window.electron.ipcRenderer.send('ping')
   >
     <TitleBar />
     <AppSearch />
+    <PluginContainer />
 
     <div class="flex flex-col items-center justify-center flex-grow">
       <img
