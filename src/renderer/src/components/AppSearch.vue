@@ -29,72 +29,29 @@ watch(keyword, () => {
 </script>
 
 <template>
-  <div class="app-search no-drag">
-    <div class="search-input">
-      <input v-model="keyword" type="text" placeholder="搜索应用..." @input="searchApps" />
+  <div class="w-full max-w-[600px] mx-auto mt-[80px] no-drag">
+    <div>
+      <input
+        v-model="keyword"
+        type="text"
+        placeholder="搜索应用..."
+        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-gray-300"
+        @input="searchApps"
+      />
     </div>
 
-    <div v-if="searchResults.length" class="search-results">
-      <div v-for="app in searchResults" :key="app.path" class="result-item">
-        <img :src="app.icon" :alt="app.name" class="app-icon" />
-        <div class="app-info">
-          <div class="app-name">{{ app.name }}</div>
-          <div class="app-path">{{ app.path }}</div>
+    <div v-if="searchResults.length" class="mt-3 border border-gray-100 rounded">
+      <div
+        v-for="app in searchResults"
+        :key="app.path"
+        class="flex items-center p-3 cursor-pointer hover:bg-gray-50"
+      >
+        <img :src="app.icon" :alt="app.name" class="w-8 h-8 mr-3" />
+        <div class="flex-1">
+          <div class="font-medium mb-1">{{ app.name }}</div>
+          <div class="text-xs text-gray-500">{{ app.path }}</div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.app-search {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.search-input input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.search-results {
-  margin-top: 12px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-}
-
-.result-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.result-item:hover {
-  background-color: #f5f5f5;
-}
-
-.app-icon {
-  width: 32px;
-  height: 32px;
-  margin-right: 12px;
-}
-
-.app-info {
-  flex: 1;
-}
-
-.app-name {
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.app-path {
-  font-size: 12px;
-  color: #666;
-}
-</style>

@@ -14,81 +14,27 @@ const close = () => {
   ipcRenderer.send('detach:service', { type: 'close' })
 }
 </script>
+
 <template>
-  <div class="title-bar">
-    <div class="info">
-      <!-- <img :src="plugInfo.logo" /> -->
+  <div class="fixed w-full h-[60px] top-0 flex items-center justify-between bg-white">
+    <div class="text-black flex items-center pl-4">
       <span>菜单</span>
     </div>
-    <div class="handle-container no-drag">
-      <div v-if="process.platform !== 'darwin'" class="window-handle">
-        <div class="minimize" @click="minimize"></div>
-        <div class="maximize" @click="maximize"></div>
-        <div class="close" @click="close"></div>
+    <div class="flex items-center h-full no-drag">
+      <div v-if="process.platform !== 'darwin'" class="flex items-center h-full">
+        <div
+          class="w-10 h-10 cursor-pointer flex items-center justify-center hover:bg-gray-100 bg-center bg-no-repeat bg-[length:20px] bg-[url('../assets/minimize.svg')]"
+          @click="minimize"
+        />
+        <div
+          class="w-10 h-10 cursor-pointer flex items-center justify-center hover:bg-gray-100 bg-center bg-no-repeat bg-[length:20px] bg-[url('../assets/maximize.svg')]"
+          @click="maximize"
+        />
+        <div
+          class="w-10 h-10 cursor-pointer flex items-center justify-center hover:bg-red-500 group bg-center bg-no-repeat bg-[length:20px] bg-[url('../assets/close.svg')] hover:bg-[url('../assets/close-hover.svg')]"
+          @click="close"
+        />
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.title-bar {
-  position: fixed;
-  width: 100%;
-  height: 60px;
-  top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #fff;
-
-  .info {
-    color: black;
-    display: flex;
-    align-items: center;
-    padding-left: 16px;
-  }
-
-  .handle-container {
-    display: flex;
-    align-items: center;
-    height: 100%;
-
-    .window-handle {
-      display: flex;
-      align-items: center;
-      height: 100%;
-
-      .minimize {
-        background: center / 20px no-repeat url('../assets/minimize.svg');
-      }
-
-      .maximize {
-        background: center / 20px no-repeat url('../assets/maximize.svg');
-      }
-
-      .unmaximize {
-        background: center / 20px no-repeat url('../assets/unmaximize.svg');
-      }
-
-      .close {
-        background: center / 20px no-repeat url('../assets/close.svg');
-
-        &:hover {
-          background-color: #e53935;
-          background-image: url('../assets/close-hover.svg');
-        }
-      }
-    }
-  }
-}
-
-.handle > div,
-.window-handle > div {
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-</style>
