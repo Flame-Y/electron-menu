@@ -17,4 +17,9 @@ export function setupWindowEvents(win: BrowserWindow): void {
   ipcMain.on('detach:service', async (_, arg: { type: string }) => {
     operation[arg.type]()
   })
+
+  // 添加窗口失焦事件
+  win.on('blur', () => {
+    win.hide()
+  })
 }

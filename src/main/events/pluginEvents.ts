@@ -36,7 +36,6 @@ export function setupPluginEvents() {
   // 获取插件列表
   ipcMain.handle('get-plugins', () => {
     const plugins = pluginManager.getAllPlugins()
-    console.log('获取插件列表:', plugins)
     return plugins
   })
 

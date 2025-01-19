@@ -151,3 +151,19 @@ ipcMain.handle('open-file', async (_event, filePath: string) => {
   })
 })
 //todo: 打开文件所在文件夹
+
+ipcMain.handle('resize-window', (_, { width, height }) => {
+  const win = BrowserWindow.getFocusedWindow()
+  if (win) {
+    win.setSize(width, height)
+  }
+})
+
+ipcMain.handle('get-window-size', () => {
+  const win = BrowserWindow.getFocusedWindow()
+  if (win) {
+    const [width, height] = win.getSize()
+    return { width, height }
+  }
+  return null
+})

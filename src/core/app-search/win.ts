@@ -150,8 +150,6 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
 
       // 为每个应用提取图标
       appList.forEach(getIcons)
-
-      console.log('找到应用数量:', appList.length) // 调试输出
       callback(appList)
     } catch (error) {
       console.error('处理应用列表出错:', error)

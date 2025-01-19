@@ -1,66 +1,108 @@
 <script setup lang="ts">
-import Versions from './components/Versions.vue'
-import TitleBar from './components/TitleBar.vue'
+import { ref } from 'vue'
 import AppSearch from './components/AppSearch.vue'
 import PluginContainer from './components/PluginContainer.vue'
-import wavyLines from './assets/wavy-lines.svg'
+import SearchResultsList from './components/SearchResultsList.vue'
 
 defineOptions({
   name: 'App'
 })
 
-const ipcHandle = () => window.electron.ipcRenderer.send('ping')
+const showPlugins = ref(false)
+const searchResultsRef = ref()
+
+const togglePlugins = async () => {
+  const baseHeight = 80 // 搜索框基础高度
+  const pluginHeight = 120 // 插件菜单高度
+  const minHeight = baseHeight + pluginHeight
+
+  // 获取当前窗口大小
+  const currentSize = await window.electron.ipcRenderer.invoke('get-window-size')
+  const currentHeight = currentSize.height
+
+  console.log('togglePlugins', currentHeight)
+  if (!showPlugins.value && currentHeight < minHeight) {
+    window.electron.ipcRenderer.invoke('resize-window', {
+      width: 600,
+      height: minHeight
+    })
+  } else if (showPlugins.value && currentHeight === minHeight) {
+    window.electron.ipcRenderer.invoke('resize-window', {
+      width: 600,
+      height: baseHeight
+    })
+  }
+  showPlugins.value = !showPlugins.value
+}
+
+const handleSearch = (keyword: string) => {
+  searchResultsRef.value?.handleSearch(keyword)
+}
 </script>
 
 <template>
-  <div
-    class="min-h-screen flex flex-col items-center bg-cover"
-    :style="{ backgroundImage: `url(${wavyLines})` }"
-  >
-    <TitleBar />
-    <AppSearch />
-    <PluginContainer />
-
-    <div class="flex flex-col items-center justify-center flex-grow">
-      <img
-        alt="logo"
-        class="w-64 h-64 no-drag mb-4 hover:scale-110 transition-all"
-        src="./assets/electron.svg"
-      />
-      <div class="text-gray-600 mb-4">Powered by electron-vite</div>
-
-      <div class="text-center mb-4">
-        Build an Electron app with
-        <span class="text-green-600">Vue</span>
-        and
-        <span class="text-blue-600">TypeScript</span>
-      </div>
-
-      <p class="text-gray-500 mb-6">
-        Please try pressing <code class="bg-gray-100 px-2 py-1 rounded">F12</code> to open the
-        devTool
-      </p>
-
-      <div class="flex gap-4 no-drag">
-        <a
-          href="https://electron-vite.org/"
-          target="_blank"
-          rel="noreferrer"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+  <div class="w-full max-w-[600px] mx-auto relative px-4">
+    <!-- 搜索框容器 -->
+    <div class="flex items-center">
+      <!-- 菜单图标 -->
+      <div class="cursor-pointer p-1 rounded-full hover:bg-gray-100 no-drag" @click="togglePlugins">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-gray-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          Documentation
-        </a>
-        <a
-          target="_blank"
-          rel="noreferrer"
-          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors cursor-pointer no-drag"
-          @click="ipcHandle"
-        >
-          Send IPC
-        </a>
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
       </div>
-
-      <Versions class="mt-8" />
+      <!-- 搜索组件 -->
+      <AppSearch @search="handleSearch" />
     </div>
+    <SearchResultsList ref="searchResultsRef" class="no-drag" />
+    <!-- 插件菜单 -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform scale-95 opacity-0"
+      enter-to-class="transform scale-100 opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="transform scale-100 opacity-100"
+      leave-to-class="transform scale-95 opacity-0"
+      class="no-drag"
+    >
+      <PluginContainer
+        v-if="showPlugins"
+        class="absolute left-0 top-12 z-50 shadow-lg"
+        @click="showPlugins = false"
+      />
+    </Transition>
   </div>
 </template>
+
+<style>
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  height: 100%;
+  overflow: hidden;
+}
+
+#app {
+  background: transparent;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+}
+</style>

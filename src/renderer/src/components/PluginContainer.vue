@@ -39,7 +39,7 @@ const loadPlugin = async (pluginId: string) => {
 }
 
 // 处理插件关闭事件
-const handlePluginClosed = (pluginId: string) => {
+const handlePluginClosed = (_event: Electron.IpcRendererEvent, pluginId: string) => {
   if (activePluginId.value === pluginId) {
     activePluginId.value = null
   }
