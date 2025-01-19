@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, protocol } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, protocol, globalShortcut } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -13,11 +13,14 @@ import { openFile } from '../core/app-search/win'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 600,
+    width: 600,
+    height: 80,
     show: false,
     frame: false,
     autoHideMenuBar: true,
+    transparent: true,
+    skipTaskbar: true, // 隐藏任务栏图标
+    alwaysOnTop: true, // 始终置顶
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -55,6 +58,26 @@ function createWindow(): void {
 
   // 设置插件事件
   setupPluginEvents()
+
+  // 注册全局快捷键
+  globalShortcut.register('CommandOrControl+Space', () => {
+    toggleWindow(mainWindow)
+  })
+
+  // 在应用退出时注销快捷键
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll()
+  })
+}
+
+// 切换窗口显示/隐藏的辅助函数
+function toggleWindow(window: BrowserWindow) {
+  if (window.isVisible()) {
+    window.hide()
+  } else {
+    window.show()
+    window.focus()
+  }
 }
 
 // 当 Electron 完成初始化并准备创建浏览器窗口时调用此方法
@@ -108,7 +131,6 @@ app.on('window-all-closed', () => {
 ipcMain.handle('search-apps', async (_, keyword: string) => {
   try {
     const results = await appSearch(keyword)
-    console.log(results)
     return results
   } catch (error) {
     console.error('搜索应用出错:', error)
