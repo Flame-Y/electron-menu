@@ -11,7 +11,6 @@ async function initializeAppList() {
       console.log('Windows 系统，开始加载应用列表...')
       getAppList((apps) => {
         appList = apps
-        console.log('应用列表加载完成，找到应用：', apps)
         resolve()
       })
     } else if (commonConst.macOS()) {

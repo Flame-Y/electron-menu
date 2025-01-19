@@ -9,6 +9,7 @@ import os from 'os'
 import { pluginManager } from './browser/plugin-manager'
 import { setupPluginEvents } from './events/pluginEvents'
 import { pluginConfig } from '../renderer/plugins/config'
+import { openFile } from '../core/app-search/win'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -114,3 +115,17 @@ ipcMain.handle('search-apps', async (_, keyword: string) => {
     return []
   }
 })
+
+// APP快速检索-打开文件
+ipcMain.handle('open-file', async (_event, filePath: string) => {
+  return new Promise((resolve) => {
+    openFile(filePath, (error) => {
+      if (error) {
+        resolve({ success: false, error })
+      } else {
+        resolve({ success: true })
+      }
+    })
+  })
+})
+//todo: 打开文件所在文件夹

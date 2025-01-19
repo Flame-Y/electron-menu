@@ -1,12 +1,28 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
-const { ipcRenderer } = window.electron
+interface App {
+  name: string
+  icon: string
+  path: string
+  desc: string
+  type: string
+  keyWords: string[]
+  action: string
+}
 
 // 搜索关键词
 const keyword = ref('')
 // 搜索结果
-const searchResults = ref([])
+const searchResults = ref<App[]>([])
+
+// 添加当前滚动索引
+const currentScrollIndex = ref(0)
+
+// 计算显示的应用列表
+const displayedApps = computed(() => {
+  return searchResults.value.slice(currentScrollIndex.value, currentScrollIndex.value + 9)
+})
 
 // 处理搜索
 const searchApps = async () => {
@@ -24,8 +40,24 @@ const searchApps = async () => {
 
 // value改变时搜索
 watch(keyword, () => {
+  currentScrollIndex.value = 0 // 重置滚动位置
   searchApps()
 })
+
+const handleAppClick = (app: App) => {
+  window.electron.ipcRenderer.invoke('open-file', app.action)
+}
+
+// 处理滚动事件
+const handleScroll = (event: WheelEvent) => {
+  event.preventDefault()
+  const direction = event.deltaY > 0 ? 1 : -1
+  const newIndex = currentScrollIndex.value + direction
+
+  if (newIndex >= 0 && newIndex <= searchResults.value.length - 9) {
+    currentScrollIndex.value = newIndex
+  }
+}
 </script>
 
 <template>
@@ -40,11 +72,16 @@ watch(keyword, () => {
       />
     </div>
 
-    <div v-if="searchResults.length" class="mt-3 border border-gray-100 rounded">
+    <div
+      v-if="searchResults.length"
+      class="mt-3 border border-gray-100 rounded overflow-hidden"
+      @wheel.prevent="handleScroll"
+    >
       <div
-        v-for="app in searchResults"
+        v-for="app in displayedApps"
         :key="app.path"
-        class="flex items-center p-3 cursor-pointer hover:bg-gray-50"
+        class="flex items-center p-3 cursor-pointer hover:bg-gray-50 h-[60px]"
+        @click="handleAppClick(app)"
       >
         <img :src="app.icon" :alt="app.name" class="w-8 h-8 mr-3" />
         <div class="flex-1">

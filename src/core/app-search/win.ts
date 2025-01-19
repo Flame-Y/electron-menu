@@ -1,11 +1,13 @@
-// µ¼ÈëËùĞèÄ£¿é
-const fs = require('fs')
-const path = require('path')
-const os = require('os')
-const child = require('child_process')
-const iconv = require('iconv-lite')
+// å¯¼å…¥æ‰€éœ€æ¨¡å—
+import fs from 'fs'
+import path from 'path'
+import os from 'os'
+import child from 'child_process'
+import iconv from 'iconv-lite'
+import fileIcon from 'extract-file-icon'
+import { pinyin } from 'pinyin-pro'
 
-// Ìí¼ÓÀàĞÍ¶¨Òå
+// æ·»åŠ ç±»å‹å®šä¹‰
 interface AppInfo {
   name: string
   desc: string
@@ -17,12 +19,12 @@ interface AppInfo {
 
 const icondir = path.join(os.tmpdir(), 'ProcessIcon')
 
-// È·±£Í¼±êÄ¿Â¼´æÔÚ
+// ç¡®ä¿å›¾æ ‡ç›®å½•å­˜åœ¨
 if (!fs.existsSync(icondir)) {
   fs.mkdirSync(icondir, { recursive: true })
 }
 
-// ÇåÀíÎÄ¼şÃû£¬ÒÆ³ı·Ç·¨×Ö·û
+// æ¸…ç†æ–‡ä»¶åï¼Œç§»é™¤éæ³•å­—ç¬¦
 function sanitizeFileName(name: string): string {
   return name
     .replace(/[\\/:*?"<>|]/g, '_')
@@ -31,14 +33,13 @@ function sanitizeFileName(name: string): string {
 }
 
 /**
- * ÎªÓ¦ÓÃ³ÌĞòÌáÈ¡Í¼±ê
- * @param {AppInfo} app - °üº¬ DisplayIcon ºÍ LegalName ÊôĞÔµÄÓ¦ÓÃĞÅÏ¢
+ * ä¸ºåº”ç”¨ç¨‹åºæå–å›¾æ ‡
+ * @param {AppInfo} app - åŒ…å« DisplayIcon å’Œ LegalName å±æ€§çš„åº”ç”¨ä¿¡æ¯
  */
 function getIcons(app: AppInfo) {
   if (!app?.desc) return
 
   try {
-    const fileIcon = require('extract-file-icon')
     const buffer = fileIcon(app.desc, 32)
     if (!buffer) return
 
@@ -57,14 +58,14 @@ function getIcons(app: AppInfo) {
 }
 
 /**
- * Ö´ĞĞ PowerShell ÃüÁî
- * @param {string} cmd - ÒªÖ´ĞĞµÄ PowerShell ÃüÁî
- * @param {function} callback - ´¦Àí±ê×¼Êä³öºÍ´íÎóÊä³öµÄ»Øµ÷º¯Êı
+ * æ‰§è¡Œ PowerShell å‘½ä»¤
+ * @param {string} cmd - è¦æ‰§è¡Œçš„ PowerShell å‘½ä»¤
+ * @param {function} callback - å¤„ç†æ ‡å‡†è¾“å‡ºå’Œé”™è¯¯è¾“å‡ºçš„å›è°ƒå‡½æ•°
  */
 function executePowerShell(cmd, callback) {
-  const ps = child.spawn('powershell', ['-NoProfile', '-Command', cmd], { encoding: 'buffer' })
-  const chunks = []
-  const errorChunks = []
+  const ps = child.spawn('powershell', ['-NoProfile', '-Command', cmd])
+  const chunks: string[] = []
+  const errorChunks: string[] = []
 
   ps.stdout.on('data', (chunk) => chunks.push(iconv.decode(chunk, 'cp936')))
   ps.stderr.on('data', (errorChunk) => errorChunks.push(iconv.decode(errorChunk, 'cp936')))
@@ -77,8 +78,8 @@ function executePowerShell(cmd, callback) {
 }
 
 /**
- * »ñÈ¡ÒÑ°²×°Ó¦ÓÃ³ÌĞòÁĞ±í
- * @param {function} callback - ´¦ÀíÓ¦ÓÃ³ÌĞòÁĞ±íµÄ»Øµ÷º¯Êı
+ * è·å–å·²å®‰è£…åº”ç”¨ç¨‹åºåˆ—è¡¨
+ * @param {function} callback - å¤„ç†åº”ç”¨ç¨‹åºåˆ—è¡¨çš„å›è°ƒå‡½æ•°
  */
 function getAppList(callback: (apps: AppInfo[]) => void) {
   const filterValues =
@@ -100,7 +101,7 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
         .trim()
         .replace(/\r\n[ ]{10,}/g, '')
         .split('\r\n\r\n')
-        .filter((app) => app.trim()) // ¹ıÂË¿Õ×Ö·û´®
+        .filter((app) => app.trim()) // è¿‡æ»¤ç©ºå­—ç¬¦ä¸²
 
       const appList = apps
         .map((app) => {
@@ -108,44 +109,65 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
           app.split('\r\n').forEach((line) => {
             if (line) {
               const [key, ...valueParts] = line.split(/\s+:\s*/)
-              const value = valueParts.join(':').trim() // ´¦ÀíÖµÖĞ¿ÉÄÜ°üº¬Ã°ºÅµÄÇé¿ö
+              const value = valueParts.join(':').trim() // å¤„ç†å€¼ä¸­å¯èƒ½åŒ…å«å†’å·çš„æƒ…å†µ
               if (key && value) dict[key] = value
             }
           })
 
-          if (!dict.DisplayName) return null // Èç¹ûÃ»ÓĞÏÔÊ¾Ãû³Æ£¬Ìø¹ı
+          if (!dict.DisplayName) return null
+
+          // å°†ç¼©å†™åŠ å…¥åˆ° keyWords ä¸­
+          const shortName = dict.DisplayName.split(' ')
+            .map((word) => word[0])
+            .join('')
+
+          // å¦‚æœ DisplayName æœ‰ä¸­æ–‡ï¼Œè§£æå‡ºæ‹¼éŸ³ pinyin('æ±‰è¯­æ‹¼éŸ³', { toneType: 'none' })
+          let pinyinResult = ''
+          let pinyinShortName = ''
+          if (dict.DisplayName) {
+            // å°†åŸå§‹å­—ç¬¦ä¸²æŒ‰ç©ºæ ¼åˆ†å‰²ï¼Œåˆ†åˆ«è½¬æ¢æ‹¼éŸ³åå†ç”¨åŸæœ‰çš„ç©ºæ ¼é‡æ–°è¿æ¥
+            pinyinResult = dict.DisplayName.split(' ')
+              .map((word) => pinyin(word, { toneType: 'none' }).replace(/\s+/g, ''))
+              .join(' ')
+
+            pinyinShortName = pinyin(dict.DisplayName, { toneType: 'none' })
+              .split(' ')
+              .map((word) => word.charAt(0)) // è·å–æ¯ä¸ªæ‹¼éŸ³çš„é¦–å­—æ¯
+              .join('') // è¿æ¥æ‰€æœ‰é¦–å­—æ¯
+              .replace(/[^a-zA-Z]/g, '') // ç§»é™¤éå­—æ¯å­—ç¬¦
+          }
 
           return {
             name: dict.DisplayName,
             desc: dict.DisplayIcon || dict.InstallLocation || '',
             type: 'app',
             icon: `app-icon://${encodeURIComponent(sanitizeFileName(dict.DisplayName))}`,
-            keyWords: [dict.DisplayName],
-            action: dict.UninstallString || ''
+            keyWords: [dict.DisplayName, pinyinResult, shortName, pinyinShortName], // todo: å…³é”®è¯æ£€ç´¢é€»è¾‘ä¼˜åŒ–
+            action: dict.DisplayIcon
           }
         })
-        .filter((app) => app !== null) // ¹ıÂËµô¿ÕÖµ
+        .filter((app) => app !== null) // è¿‡æ»¤æ‰ç©ºå€¼
 
-      // ÎªÃ¿¸öÓ¦ÓÃÌáÈ¡Í¼±ê
+      // ä¸ºæ¯ä¸ªåº”ç”¨æå–å›¾æ ‡
       appList.forEach(getIcons)
 
-      console.log('ÕÒµ½Ó¦ÓÃÊıÁ¿:', appList.length) // µ÷ÊÔÊä³ö
+      console.log('æ‰¾åˆ°åº”ç”¨æ•°é‡:', appList.length) // è°ƒè¯•è¾“å‡º
       callback(appList)
     } catch (error) {
-      console.error('´¦ÀíÓ¦ÓÃÁĞ±í³ö´í:', error)
+      console.error('å¤„ç†åº”ç”¨åˆ—è¡¨å‡ºé”™:', error)
       callback([])
     }
   })
 }
 
 /**
- * Ê¹ÓÃĞ¶ÔØÃüÁîĞ¶ÔØÓ¦ÓÃ³ÌĞò
- * @param {string} command - Ó¦ÓÃ³ÌĞòµÄĞ¶ÔØÃüÁî
- * @param {function} callback - ´¦Àí´íÎóµÄ»Øµ÷º¯Êı
+ * ä½¿ç”¨å¸è½½å‘½ä»¤å¸è½½åº”ç”¨ç¨‹åº
+ * @param {string} command - åº”ç”¨ç¨‹åºçš„å¸è½½å‘½ä»¤
+ * @param {function} callback - å¤„ç†é”™è¯¯çš„å›è°ƒå‡½æ•°
  */
-function removeApp(command, callback) {
-  const sanitizedCommand = command.replace(/(^[A-z]:\\[\S ]+\\\S+)($| )/, '\"$1\"$2')
-  child.exec(sanitizedCommand, { encoding: 'buffer' }, (err, stdout, stderr) => {
+function removeApp(command: string, callback: (error: string | null) => void) {
+  const sanitizedCommand = command.replace(/(^[A-z]:\\[\S ]+\\\S+)($| )/, '"$1"$2')
+  child.exec(sanitizedCommand, { encoding: 'buffer' }, (err, _stdout, stderr) => {
     if (err) {
       callback(iconv.decode(stderr, 'cp936'))
     } else {
@@ -155,13 +177,13 @@ function removeApp(command, callback) {
 }
 
 /**
- * ´ò¿ªÓ¦ÓÃ³ÌĞòµÄ°²×°Ä¿Â¼
- * @param {string} folderPath - °²×°Ä¿Â¼Â·¾¶
- * @param {function} callback - ´¦Àí´íÎó»ò³É¹¦µÄ»Øµ÷º¯Êı
+ * æ‰“å¼€åº”ç”¨ç¨‹åºçš„å®‰è£…ç›®å½•
+ * @param {string} folderPath - å®‰è£…ç›®å½•è·¯å¾„
+ * @param {function} callback - å¤„ç†é”™è¯¯æˆ–æˆåŠŸçš„å›è°ƒå‡½æ•°
  */
-function openFolder(folderPath, callback) {
+function openFolder(folderPath: string, callback: (error: string | null) => void) {
   if (folderPath) {
-    child.exec(`explorer.exe ${folderPath}`, { encoding: 'buffer' }, (err, stdout, stderr) => {
+    child.exec(`explorer.exe ${folderPath}`, { encoding: 'buffer' }, (err, _stdout, stderr) => {
       if (err) {
         callback(iconv.decode(stderr, 'cp936'))
       } else {
@@ -173,5 +195,23 @@ function openFolder(folderPath, callback) {
   }
 }
 
-// µ¼³öÄ£¿éº¯Êı
-export { getAppList, removeApp, openFolder }
+/**
+ * æ‰“å¼€æ–‡ä»¶
+ * @param {string} filePath - æ–‡ä»¶è·¯å¾„
+ */
+function openFile(filePath: string, callback: (error: string | null) => void) {
+  if (filePath) {
+    child.exec(`start "" "${filePath}"`, { encoding: 'buffer' }, (err, _stdout, stderr) => {
+      if (err) {
+        callback(iconv.decode(stderr, 'cp936'))
+      } else {
+        callback(null)
+      }
+    })
+  } else {
+    callback('File path not found!')
+  }
+}
+
+// å¯¼å‡ºæ¨¡å—å‡½æ•°
+export { getAppList, removeApp, openFolder, openFile }
