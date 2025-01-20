@@ -38,7 +38,12 @@ class PluginManager {
         plugin.from === 'npm'
           ? plugin.indexPath
           : `file://${path.join(app.getAppPath(), plugin.indexPath)}`,
-      preload: plugin.preload ? path.join(app.getAppPath(), plugin.preload) : undefined
+      preload:
+        plugin.from === 'npm'
+          ? plugin.preload
+          : plugin.preload
+            ? path.join(app.getAppPath(), plugin.preload)
+            : undefined
     }
     console.log('解析后的插件配置:', resolvedPlugin)
     this.plugins.set(plugin.id, resolvedPlugin)

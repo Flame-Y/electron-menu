@@ -75,14 +75,24 @@ class AdapterHandler {
     }
   }
 
-  private async execCommand(cmd: string, modules: string[]): Promise<any> {
+  private async execCommand(
+    cmd: string,
+    modules: string[],
+    options: { cwd?: string } = {}
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
       const args = [cmd]
         .concat(cmd !== 'uninstall' && cmd !== 'link' ? modules.map((m) => `${m}@latest`) : modules)
         .concat('--save')
         .concat(`--registry=${this.registry}`)
 
-      const npm = spawn('npm', args, { cwd: this.baseDir })
+      // 使用完整的 npm 路径
+      const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+
+      const npm = spawn(npmCmd, args, {
+        cwd: options.cwd || this.baseDir,
+        shell: true
+      })
 
       let output = ''
       npm.stdout.on('data', (data) => (output += data.toString()))
