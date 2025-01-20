@@ -56,8 +56,8 @@ function createWindow(): void {
     pluginManager.registerPlugin(plugin)
   })
 
-  // 设置插件事件
-  setupPluginEvents()
+  // 设置插件事件，传入主窗口实例
+  setupPluginEvents(mainWindow)
 
   // 注册全局快捷键
   globalShortcut.register('CommandOrControl+Space', () => {

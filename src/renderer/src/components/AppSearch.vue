@@ -1,10 +1,23 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
+const keyword = ref('')
+
 const emit = defineEmits(['search'])
 
 const handleInput = (event: Event) => {
   const value = (event.target as HTMLInputElement).value
   emit('search', value)
 }
+
+// 暴露清空搜索的方法
+const clearSearch = () => {
+  keyword.value = ''
+}
+
+defineExpose({
+  clearSearch
+})
 </script>
 
 <template>

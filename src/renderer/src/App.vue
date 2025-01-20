@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import AppSearch from './components/AppSearch.vue'
-import PluginContainer from './components/PluginContainer.vue'
+import PluginMarket from './components/PluginMarket.vue'
 import SearchResultsList from './components/SearchResultsList.vue'
 
 defineOptions({
@@ -12,27 +12,23 @@ const showPlugins = ref(false)
 const searchResultsRef = ref()
 
 const togglePlugins = async () => {
-  const baseHeight = 80 // 搜索框基础高度
-  const pluginHeight = 120 // 插件菜单高度
-  const minHeight = baseHeight + pluginHeight
+  showPlugins.value = !showPlugins.value
 
-  // 获取当前窗口大小
-  const currentSize = await window.electron.ipcRenderer.invoke('get-window-size')
-  const currentHeight = currentSize.height
+  // 等待清除搜索结果完成
+  await searchResultsRef.value?.handleSearch('')
 
-  console.log('togglePlugins', currentHeight)
-  if (!showPlugins.value && currentHeight < minHeight) {
-    window.electron.ipcRenderer.invoke('resize-window', {
+  if (showPlugins.value) {
+    // 固定高度为搜索框高度 + 插件市场高度
+    await window.electron.ipcRenderer.invoke('resize-window', {
       width: 600,
-      height: minHeight
+      height: 560 // 80 + 480
     })
-  } else if (showPlugins.value && currentHeight === minHeight) {
-    window.electron.ipcRenderer.invoke('resize-window', {
+  } else {
+    await window.electron.ipcRenderer.invoke('resize-window', {
       width: 600,
-      height: baseHeight
+      height: 80
     })
   }
-  showPlugins.value = !showPlugins.value
 }
 
 const handleSearch = (keyword: string) => {
@@ -41,11 +37,15 @@ const handleSearch = (keyword: string) => {
 </script>
 
 <template>
-  <div class="w-full max-w-[600px] mx-auto relative px-4">
+  <div class="w-full max-w-[600px] mx-auto relative">
     <!-- 搜索框容器 -->
-    <div class="flex items-center">
+    <div class="flex items-center px-4">
       <!-- 菜单图标 -->
-      <div class="cursor-pointer p-1 rounded-full hover:bg-gray-100 no-drag" @click="togglePlugins">
+      <div
+        class="flex items-center cursor-pointer px-2 h-7 rounded-lg hover:bg-gray-100 no-drag"
+        :class="{ 'bg-gray-100': showPlugins }"
+        @click="togglePlugins"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="h-5 w-5 text-gray-500"
@@ -60,12 +60,17 @@ const handleSearch = (keyword: string) => {
             d="M4 6h16M4 12h16M4 18h16"
           />
         </svg>
+        <span
+          class="ml-1 text-sm text-gray-500 transition-all duration-200 w-0 overflow-hidden whitespace-nowrap"
+          :class="{ 'w-[4em]': showPlugins }"
+          >插件市场</span
+        >
       </div>
       <!-- 搜索组件 -->
       <AppSearch @search="handleSearch" />
     </div>
     <SearchResultsList ref="searchResultsRef" class="no-drag" />
-    <!-- 插件菜单 -->
+    <!-- 插件市场 -->
     <Transition
       enter-active-class="transition duration-200 ease-out"
       enter-from-class="transform scale-95 opacity-0"
@@ -75,11 +80,7 @@ const handleSearch = (keyword: string) => {
       leave-to-class="transform scale-95 opacity-0"
       class="no-drag"
     >
-      <PluginContainer
-        v-if="showPlugins"
-        class="absolute left-0 top-12 z-50 shadow-lg"
-        @click="showPlugins = false"
-      />
+      <PluginMarket v-if="showPlugins" class="mt-4" />
     </Transition>
   </div>
 </template>

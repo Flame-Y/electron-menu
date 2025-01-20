@@ -1,8 +1,21 @@
-import { ipcMain } from 'electron'
+import { ipcMain, globalShortcut, BrowserWindow } from 'electron'
 import { pluginManager } from '../browser/plugin-manager'
 import { screenWindow } from '../../../plugins/screenshot/capture'
 
-export function setupPluginEvents() {
+let mainWindow: BrowserWindow | null = null
+
+function toggleWindow(window: BrowserWindow) {
+  if (window.isVisible()) {
+    window.hide()
+  } else {
+    window.show()
+    window.focus()
+  }
+}
+
+export function setupPluginEvents(window: BrowserWindow) {
+  mainWindow = window
+
   // 注册插件
   ipcMain.handle('register-plugins', (_, plugins: any[]) => {
     plugins.forEach((plugin) => {
@@ -66,5 +79,35 @@ export function setupPluginEvents() {
   ipcMain.handle('screenshot:capture', async () => {
     const result = await screenWindow()
     return result
+  })
+
+  // 更新快捷键
+  ipcMain.handle('update-shortcut', async (_, newShortcut: string) => {
+    try {
+      // 先注销现有快捷键
+      globalShortcut.unregisterAll()
+
+      // 注册新快捷键
+      const registered = globalShortcut.register(newShortcut, () => {
+        if (mainWindow) {
+          toggleWindow(mainWindow)
+        }
+      })
+
+      if (!registered) {
+        throw new Error('快捷键注册失败，可能与系统快捷键冲突')
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('更新快捷键失败:', error)
+      // 如果更新失败，重新注册默认快捷键
+      globalShortcut.register('CommandOrControl+Space', () => {
+        if (mainWindow) {
+          toggleWindow(mainWindow)
+        }
+      })
+      return { success: false, error: error.message }
+    }
   })
 }
