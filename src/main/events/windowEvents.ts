@@ -19,7 +19,7 @@ export function setupWindowEvents(win: BrowserWindow): void {
   })
 
   // 添加窗口失焦事件
-  win.on('blur', () => {
-    win.hide()
-  })
+  // win.on('blur', () => {
+  //   win.hide()
+  // })
 }

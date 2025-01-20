@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DeveloperTab from './plugin-market/DeveloperTab.vue'
+import InstalledTab from './plugin-market/InstalledTab.vue'
 import SystemTab from './plugin-market/SystemTab.vue'
 
 const activeNav = ref('developer')
@@ -9,6 +10,10 @@ const navItems = [
   {
     id: 'developer',
     name: '开发者'
+  },
+  {
+    id: 'installed',
+    name: '已安装'
   },
   {
     id: 'system',
@@ -40,6 +45,7 @@ const navItems = [
     <!-- 右侧内容区 -->
     <div class="flex-1 p-6">
       <DeveloperTab v-if="activeNav === 'developer'" />
+      <InstalledTab v-else-if="activeNav === 'installed'" />
       <SystemTab v-else-if="activeNav === 'system'" />
     </div>
   </div>

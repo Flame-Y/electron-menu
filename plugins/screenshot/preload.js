@@ -5,6 +5,9 @@ contextBridge.exposeInMainWorld('electron', {
     capture: () => ipcRenderer.invoke('screenshot:capture')
   },
   ipcRenderer: {
+    send: (channel, data) => {
+      ipcRenderer.send(channel, data)
+    },
     on: (channel, func) => {
       ipcRenderer.on(channel, (_, ...args) => func(...args))
     },

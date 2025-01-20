@@ -80,15 +80,44 @@ class PluginManager {
       // 设置视图位置和大小
       view.setBounds({
         x: 0,
-        y: WINDOW_HEIGHT,
-        width: WINDOW_WIDTH,
-        height: WINDOW_PLUGIN_HEIGHT - WINDOW_HEIGHT
+        y: 80,
+        width: 600,
+        height: 480
       })
 
+      // 注入退出按钮的样式和HTML
+      //todo: 插件preload.js没有send方法时的处理
+      await contents.insertCSS(`
+        .plugin-close-btn {
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          padding: 6px 12px;
+          background-color: #ef4444;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          z-index: 9999;
+        }
+        .plugin-close-btn:hover {
+          background-color: #dc2626;
+        }
+      `)
+
+      await contents.executeJavaScript(`
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'plugin-close-btn';
+        closeBtn.textContent = '退出插件';
+        closeBtn.onclick = () => {
+          window.electron.ipcRenderer.send('close-plugin', { pluginId: '${pluginId}' });
+        };
+        document.body.appendChild(closeBtn);
+      `)
+
       this.activePlugin = plugin
-      // 打开browserWindow开发者工具
       view.webContents.openDevTools()
-      // 监听插件事件
       this.setupPluginEvents(plugin)
     } catch (error) {
       console.error(`Failed to load plugin ${pluginId}:`, error)
