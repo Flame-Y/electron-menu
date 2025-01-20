@@ -1,6 +1,8 @@
-import { ipcMain, globalShortcut, BrowserWindow } from 'electron'
+import { ipcMain, globalShortcut, BrowserWindow, app } from 'electron'
 import { pluginManager } from '../browser/plugin-manager'
 import { screenWindow } from '../../../plugins/screenshot/capture'
+import { adapterHandler } from '../plugin/adapter-handler'
+import path from 'path'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -109,5 +111,57 @@ export function setupPluginEvents(window: BrowserWindow) {
       })
       return { success: false, error: error.message }
     }
+  })
+
+  // 安装插件
+  ipcMain.handle('install-plugin', async (_, pluginName: string) => {
+    try {
+      await adapterHandler.install([pluginName])
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 卸载插件
+  ipcMain.handle('uninstall-plugin', async (_, pluginName: string) => {
+    try {
+      await adapterHandler.uninstall([pluginName])
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取已安装插件列表
+  ipcMain.handle('list-installed-plugins', async () => {
+    try {
+      const plugins = await adapterHandler.list()
+      const pluginPath = path.join(app.getPath('userData'), 'plugins')
+
+      // 处理路径拼接
+      const processedPlugins = plugins.map((name) => ({
+        id: name,
+        name,
+        indexPath: path.join(pluginPath, 'node_modules', name, 'index.html').replace(/\\/g, '/'),
+        preload: path.join(pluginPath, 'node_modules', name, 'preload.js').replace(/\\/g, '/'),
+        from: 'npm'
+      }))
+      console.log('processedPlugins', processedPlugins)
+      processedPlugins.forEach((plugin) => {
+        pluginManager.registerPlugin(plugin)
+      })
+      return {
+        success: true,
+        plugins: processedPlugins
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取插件安装路径
+  ipcMain.handle('get-plugin-path', () => {
+    return path.join(app.getPath('userData'), 'plugins')
   })
 }

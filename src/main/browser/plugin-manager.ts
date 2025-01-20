@@ -1,6 +1,5 @@
 import { BrowserView, BrowserWindow, app } from 'electron'
 import path from 'path'
-import { WINDOW_HEIGHT, WINDOW_PLUGIN_HEIGHT, WINDOW_WIDTH } from '../../common/constants/common'
 
 interface Plugin {
   id: string
@@ -8,6 +7,7 @@ interface Plugin {
   indexPath: string
   preload?: string
   view?: BrowserView
+  from?: 'npm' | 'local'
 }
 
 class PluginManager {
@@ -33,7 +33,11 @@ class PluginManager {
 
     const resolvedPlugin = {
       ...plugin,
-      indexPath: `file://${path.join(app.getAppPath(), plugin.indexPath)}`,
+      // 如果插件来自npm，则不需要拼接路径
+      indexPath:
+        plugin.from === 'npm'
+          ? plugin.indexPath
+          : `file://${path.join(app.getAppPath(), plugin.indexPath)}`,
       preload: plugin.preload ? path.join(app.getAppPath(), plugin.preload) : undefined
     }
     console.log('解析后的插件配置:', resolvedPlugin)
@@ -50,7 +54,6 @@ class PluginManager {
     if (this.activePlugin) {
       await this.unloadPlugin(this.activePlugin.id)
     }
-
     const plugin = this.plugins.get(pluginId)
     if (!plugin) {
       throw new Error(`Plugin ${pluginId} not found`)
@@ -67,7 +70,6 @@ class PluginManager {
           preload: plugin.preload
         }
       })
-
       // 保存视图引用
       plugin.view = view
 
