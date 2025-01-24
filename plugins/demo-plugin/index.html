@@ -26,6 +26,8 @@
                 from: 'demo-plugin',
                 content: 'Hello from plugin!'
             })
+            console.log('uiko', window.uiko)
+            window.uiko.copyText('Hello from plugin!!!')
         }
         function closePlugin() {
             window.electron.ipcRenderer.invoke('unload-plugin', 'demo-plugin')

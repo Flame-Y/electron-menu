@@ -1,4 +1,4 @@
-import { BrowserView, BrowserWindow, app } from 'electron'
+import { BrowserView, BrowserWindow, app, session } from 'electron'
 import path from 'path'
 
 interface Plugin {
@@ -63,7 +63,10 @@ class PluginManager {
     if (!plugin) {
       throw new Error(`Plugin ${pluginId} not found`)
     }
-
+    const ses = session.fromPartition('<' + plugin.id + '>')
+    // 通过 session 注入系统 preload
+    ses.setPreloads([path.join(__dirname, '../../out/preload/index.js')])
+    console.log('ses', path.join(__dirname, '../../out/preload/index.js'))
     try {
       // 创建插件视图
       const view = new BrowserView({
@@ -72,7 +75,8 @@ class PluginManager {
           nodeIntegration: true,
           contextIsolation: true,
           sandbox: false,
-          preload: plugin.preload
+          preload: plugin.preload,
+          session: ses
         }
       })
       // 保存视图引用
@@ -125,7 +129,7 @@ class PluginManager {
 
       this.activePlugin = plugin
       view.webContents.openDevTools()
-      this.setupPluginEvents(plugin)
+      this.setupPluginLifecycleEvents(plugin)
     } catch (error) {
       console.error(`Failed to load plugin ${pluginId}:`, error)
       throw error
@@ -149,7 +153,7 @@ class PluginManager {
   }
 
   // 设置插件事件监听
-  private setupPluginEvents(plugin: Plugin) {
+  private setupPluginLifecycleEvents(plugin: Plugin) {
     if (!plugin.view) return
 
     const contents = this.getWebContents(plugin.view)
@@ -157,7 +161,7 @@ class PluginManager {
       console.log(`Plugin ${plugin.name} is ready`)
     })
 
-    contents.once('crashed', () => {
+    contents.once('render-process-gone', () => {
       console.error(`Plugin ${plugin.name} has crashed`)
       this.unloadPlugin(plugin.id)
     })

@@ -10,6 +10,7 @@ import { pluginManager } from './browser/plugin-manager'
 import { setupPluginEvents } from './events/pluginEvents'
 import { pluginConfig } from '../renderer/plugins/config'
 import { openFile } from '../core/app-search/win'
+import { api } from '../common/api'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -166,4 +167,21 @@ ipcMain.handle('get-window-size', () => {
     return { width, height }
   }
   return null
+})
+
+ipcMain.on('msg-trigger', async (event, { type, data }) => {
+  if (type in api) {
+    try {
+      // 调用映射的 API 方法
+      const result = await api[type](data)
+      console.log('result', result)
+      event.returnValue = result
+    } catch (error) {
+      console.error(`Error executing ${type}:`, error)
+      event.returnValue = { error: error.message }
+    }
+  } else {
+    console.warn(`API method ${type} not found`)
+    event.returnValue = { error: `Method ${type} not found` }
+  }
 })
