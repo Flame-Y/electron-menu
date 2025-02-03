@@ -35,7 +35,7 @@ const handleSearch = (keyword: string) => {
   searchResultsRef.value?.handleSearch(keyword)
 }
 </script>
-
+<!-- todo: 样式优化 -->
 <template>
   <div class="w-full max-w-[600px] mx-auto relative">
     <!-- 搜索框容器 -->
@@ -95,15 +95,17 @@ html {
 body {
   margin: 0;
   padding: 0;
-  background: transparent;
   height: 100%;
+  background-color: rgba(0, 0, 0, 0);
   overflow: hidden;
 }
 
 #app {
-  background: transparent;
   height: 100%;
   display: flex;
   align-items: flex-start;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 24px;
 }
 </style>

@@ -21,7 +21,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="w-full max-w-[600px] mx-auto no-drag h-[80px]">
+  <div class="w-full max-w-[600px] mx-auto no-drag h-[80px] rounded">
     <input
       type="text"
       placeholder="搜索应用..."

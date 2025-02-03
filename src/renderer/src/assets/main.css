@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply min-h-screen text-gray-900 bg-white;
+    @apply min-h-screen text-gray-900;
     @apply font-sans antialiased;
     -webkit-app-region: drag;
   }

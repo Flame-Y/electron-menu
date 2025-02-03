@@ -18,6 +18,7 @@ function createWindow(): void {
     height: 80,
     show: false,
     frame: false,
+    backgroundColor: '#00000000',
     autoHideMenuBar: true,
     transparent: true,
     skipTaskbar: true, // 隐藏任务栏图标
