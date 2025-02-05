@@ -72,35 +72,56 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div>
+  <div class="h-full flex flex-col">
     <h2 class="text-lg font-medium text-gray-900 mb-4">已安装插件</h2>
-    <div class="space-y-4">
-      <div v-for="plugin in installedPlugins" :key="plugin.id" class="bg-gray-50 p-4 rounded-lg">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-sm font-medium text-gray-900">{{ plugin.name }}</h3>
-            <p class="text-xs text-gray-500 mt-1">{{ plugin.description || '暂无描述' }}</p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <button
-              class="px-3 py-1 text-xs text-white rounded transition-colors"
-              :class="[
-                activePluginId === plugin.id
-                  ? 'bg-red-500 hover:bg-red-600'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              ]"
-              @click="
-                activePluginId === plugin.id ? unloadPlugin(plugin.id) : loadPlugin(plugin.id)
-              "
-            >
-              {{ activePluginId === plugin.id ? '停止' : '运行' }}
-            </button>
+    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+      <div class="space-y-4">
+        <div v-for="plugin in installedPlugins" :key="plugin.id" class="bg-gray-50 p-4 rounded-lg">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">{{ plugin.name }}</h3>
+              <p class="text-xs text-gray-500 mt-1">{{ plugin.description || '暂无描述' }}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button
+                class="px-3 py-1 text-xs text-white rounded transition-colors"
+                :class="[
+                  activePluginId === plugin.id
+                    ? 'bg-red-500 hover:bg-red-600'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                ]"
+                @click="
+                  activePluginId === plugin.id ? unloadPlugin(plugin.id) : loadPlugin(plugin.id)
+                "
+              >
+                {{ activePluginId === plugin.id ? '停止' : '运行' }}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      <div v-if="!installedPlugins.length" class="text-center text-gray-500 py-8">
-        暂无已安装插件
+        <div v-if="!installedPlugins.length" class="text-center text-gray-500 py-8">
+          暂无已安装插件
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #d1d5db;
+}
+</style>
