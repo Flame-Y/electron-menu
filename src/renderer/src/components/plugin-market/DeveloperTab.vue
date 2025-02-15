@@ -47,13 +47,25 @@ const installPlugin = async () => {
     installStatus.value = 'idle'
   }, 3000)
 }
+
+const openApiDocs = () => {
+  window.electron.ipcRenderer.send('open-api-docs')
+}
 </script>
 
 <template>
   <div>
-    <h2 class="text-lg font-medium text-gray-900 mb-4">开发者插件</h2>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-medium text-gray-900">开发者插件</h2>
+      <button
+        class="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+        @click="openApiDocs"
+      >
+        打开 API 手册
+      </button>
+    </div>
     <div class="space-y-4">
-      <!-- 显示插件安装路径 -->
+      <!-- 插件安装路径（更新后的UI） -->
       <div class="bg-gray-50 p-4 rounded-lg">
         <h3 class="text-sm font-medium text-gray-700 mb-2">插件安装位置</h3>
         <p class="text-xs text-gray-600">{{ pluginPath }}</p>

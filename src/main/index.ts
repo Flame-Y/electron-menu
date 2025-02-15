@@ -213,3 +213,27 @@ ipcMain.on('msg-trigger', async (event, { type, data }) => {
     event.returnValue = { error: `Method ${type} not found` }
   }
 })
+
+// 添加创建 API 文档窗口的函数
+function createApiDocsWindow() {
+  const apiDocsWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    },
+    title: 'Uiko API 手册'
+  })
+
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    apiDocsWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/api-docs.html`)
+  } else {
+    apiDocsWindow.loadFile(join(__dirname, '../renderer/api-docs.html'))
+  }
+}
+
+// 监听打开 API 文档的事件
+ipcMain.on('open-api-docs', () => {
+  createApiDocsWindow()
+})
