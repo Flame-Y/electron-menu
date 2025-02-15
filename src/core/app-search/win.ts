@@ -143,7 +143,7 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
             type: 'app',
             icon: `app-icon://${encodeURIComponent(sanitizeFileName(dict.DisplayName))}`,
             keyWords: [dict.DisplayName, pinyinResult, shortName, pinyinShortName], // todo: 关键词检索逻辑优化
-            action: dict.DisplayIcon
+            action: getExecutablePath(dict) || dict.DisplayIcon
           }
         })
         .filter((app) => app !== null) // 过滤掉空值
@@ -158,6 +158,62 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
   })
 }
 
+// 新增可执行路径解析函数
+function getExecutablePath(dict: { [key: string]: string }): string | null {
+  try {
+    if (dict.DisplayIcon && dict.DisplayIcon.includes('.exe')) return dict.DisplayIcon
+    // 情况1：InstallLocation包含可执行文件路径
+    if (dict.InstallLocation) {
+      const exeFiles = fs
+        .readdirSync(dict.InstallLocation)
+        .filter((file) => file.endsWith('.exe') && !file.toLowerCase().includes('uninstall'))
+
+      // 优先选择与应用同名的exe
+      const mainExe = exeFiles.find(
+        (file) => sanitizeFileName(file) === sanitizeFileName(dict.DisplayName + '.exe')
+      )
+      if (mainExe) return path.join(dict.InstallLocation, mainExe)
+
+      // 次选：体积最大的exe（通常为主程序）
+      if (exeFiles.length > 0) {
+        const largestExe = exeFiles.reduce((prev, current) => {
+          const prevSize = fs.statSync(path.join(dict.InstallLocation, prev)).size
+          const currentSize = fs.statSync(path.join(dict.InstallLocation, current)).size
+          return currentSize > prevSize ? current : prev
+        })
+        return path.join(dict.InstallLocation, largestExe)
+      }
+    }
+
+    // 情况2：解析UninstallString中的真实路径
+    if (dict.UninstallString) {
+      const match = dict.UninstallString.match(/"([^"]+\.exe)"/i)
+      if (match && fs.existsSync(match[1])) {
+        return match[1]
+      }
+    }
+
+    // 情况3：特殊程序处理（如Steam游戏）
+    if (dict.Publisher?.includes('Steam') || dict.InstallLocation?.includes('Steam')) {
+      const appId = getSteamAppId(dict.InstallLocation)
+      if (appId) return `steam://rungameid/${appId}`
+    }
+  } catch (e) {
+    console.error('路径解析失败:', e)
+  }
+  return null
+}
+
+// 获取Steam游戏ID
+function getSteamAppId(installPath: string): string | null {
+  const acfFiles = fs.readdirSync(installPath).filter((f) => f.endsWith('.acf'))
+  if (acfFiles.length > 0) {
+    const acfContent = fs.readFileSync(path.join(installPath, acfFiles[0]), 'utf-8')
+    const appIdMatch = acfContent.match(/^\s*"appid"\s+"(\d+)"/m)
+    return appIdMatch ? appIdMatch[1] : null
+  }
+  return null
+}
 /**
  * 使用卸载命令卸载应用程序
  * @param {string} command - 应用程序的卸载命令

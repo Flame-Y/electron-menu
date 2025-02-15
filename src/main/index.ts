@@ -9,7 +9,7 @@ import os from 'os'
 import { pluginManager } from './browser/plugin-manager'
 import { setupPluginEvents } from './events/pluginEvents'
 import { pluginConfig } from '../renderer/plugins/config'
-import { openFile } from '../core/app-search/win'
+import { openFile, openFolder, removeApp } from '../core/app-search/win'
 import { api } from '../common/api'
 
 function createWindow(): void {
@@ -152,7 +152,34 @@ ipcMain.handle('open-file', async (_event, filePath: string) => {
     })
   })
 })
-//todo: 打开文件所在文件夹
+
+// 打开文件夹
+ipcMain.handle('open-folder', async (_event, folderPath) => {
+  console.log(folderPath)
+
+  return new Promise((resolve, reject) => {
+    openFolder(folderPath, (error) => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve(true)
+      }
+    })
+  })
+})
+
+// 卸载应用
+ipcMain.handle('remove-app', async (_event, uninstallCommand) => {
+  return new Promise((resolve, reject) => {
+    removeApp(uninstallCommand, (error) => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve(true)
+      }
+    })
+  })
+})
 
 ipcMain.handle('resize-window', (_, { width, height }) => {
   const win = BrowserWindow.getFocusedWindow()
@@ -175,7 +202,7 @@ ipcMain.on('msg-trigger', async (event, { type, data }) => {
     try {
       // 调用映射的 API 方法
       const result = await api[type](data)
-      console.log('result', result)
+      // console.log('result', result)
       event.returnValue = result
     } catch (error) {
       console.error(`Error executing ${type}:`, error)
