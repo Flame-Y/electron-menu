@@ -1,6 +1,6 @@
 import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { uikoAPI } from './uiko'
+import { mortisAPI } from './mortis'
 // Custom APIs for renderer
 const api = {}
 
@@ -11,7 +11,7 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
-    contextBridge.exposeInMainWorld('uiko', uikoAPI)
+    contextBridge.exposeInMainWorld('mortis', mortisAPI)
   } catch (error) {
     console.error(error)
   }
@@ -19,7 +19,7 @@ if (process.contextIsolated) {
   // @ts-ignore (define in dts)
   window.electron = electronAPI
   // @ts-ignore (define in dts)
-  window.uiko = uikoAPI
+  window.mortis = mortisAPI
   // @ts-ignore (define in dts)
   window.api = api
 }

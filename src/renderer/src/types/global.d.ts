@@ -1,6 +1,6 @@
 interface Window {
   electron: { ipcRenderer: any }
-  uiko: {
+  mortis: {
     copyText: (text: string) => void
     getClipboardImage: () => Promise<string | null>
   }

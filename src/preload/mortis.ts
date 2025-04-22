@@ -15,10 +15,10 @@ const asyncIpcSend = async (type: string, data?: any) => {
   })
 }
 
-// 定义 uiko 的 openAPI
-export const uikoAPI = {
+// 定义 mortis 的 openAPI
+export const mortisAPI = {
   copyText(text: string) {
-    console.log('uiko copyText', text)
+    console.log('mortis copyText', text)
     ipcSend('copyText', text)
   },
 

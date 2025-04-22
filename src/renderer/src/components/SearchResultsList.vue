@@ -118,13 +118,13 @@ defineExpose({
 <template>
   <div
     v-if="searchResults.length"
-    class="mt-2 border border-gray-100 rounded overflow-hidden bg-white shadow-lg no-drag"
+    class="mt-2 border border-gray-100 rounded overflow-hidden bg-zinc-100 shadow-lg no-drag"
     @wheel.prevent="handleScroll"
   >
     <div
       v-for="app in displayedApps"
       :key="app.path"
-      class="flex items-center p-3 cursor-pointer hover:bg-gray-50 h-[60px]"
+      class="flex items-center p-3 cursor-pointer hover:bg-gradient-to-r from-[#f7f8f8] to-[#d8e6a5] h-[60px] transition ease-in-out delay-150"
       @click="handleAppClick(app)"
       @contextmenu="handleContextMenu($event, app)"
     >

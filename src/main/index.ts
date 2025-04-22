@@ -223,7 +223,7 @@ function createApiDocsWindow() {
       nodeIntegration: true,
       contextIsolation: false
     },
-    title: 'Uiko API 手册'
+    title: 'Mortis API 手册'
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

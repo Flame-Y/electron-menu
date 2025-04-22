@@ -42,24 +42,12 @@ const handleSearch = (keyword: string) => {
     <div class="flex items-center px-4">
       <!-- 菜单图标 -->
       <div
-        class="flex items-center cursor-pointer px-2 h-7 rounded-lg hover:bg-gray-100 no-drag"
-        :class="{ 'bg-gray-100': showPlugins }"
+        class="flex items-center cursor-pointer px-2 h-7 rounded-lg hover:bg-gray-100 no-drag transition-all duration-300"
+        :class="{ 'bg-indigo-50/80': showPlugins }"
         @click="togglePlugins"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5 text-gray-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
+        <span class="text-2xl">🥒</span>
+
         <span
           class="ml-1 text-sm text-gray-500 transition-all duration-200 w-0 overflow-hidden whitespace-nowrap"
           :class="{ 'w-[4em]': showPlugins }"
@@ -105,7 +93,10 @@ body {
   display: flex;
   align-items: flex-start;
   text-align: center;
-  background-color: #fff;
   border-radius: 24px;
+  background-image: url('./assets/background.jpg');
+  background-color: #fff;
+  background-size: 220%;
+  background-position: -250px 0;
 }
 </style>

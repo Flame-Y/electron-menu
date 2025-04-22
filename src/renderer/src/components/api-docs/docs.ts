@@ -22,5 +22,11 @@ export const api: API[] = [
     description: '获取剪贴板中的图片',
     params: [],
     returns: 'string | null // 返回图片的 Data URL 或 null'
+  },
+  {
+    name: 'exitPlugin',
+    description: '退出插件',
+    params: [],
+    returns: ''
   }
 ]

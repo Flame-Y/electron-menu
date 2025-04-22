@@ -37,7 +37,7 @@ const navItems = [
 </script>
 
 <template>
-  <div class="flex h-[480px] backdrop-blur-md bg-white/30 shadow-lg overflow-hidden">
+  <div class="flex h-[480px] shadow-lg overflow-hidden">
     <!-- 左侧导航栏 -->
     <div class="w-32 border-r border-gray-200">
       <nav class="py-4">

@@ -29,8 +29,6 @@ class PluginManager {
   // 注册插件
   registerPlugin(plugin: Plugin) {
     // 处理路径
-    console.log('原始插件配置:', plugin)
-
     const resolvedPlugin = {
       ...plugin,
       // 如果插件来自npm，则不需要拼接路径
@@ -45,7 +43,6 @@ class PluginManager {
             ? path.join(app.getAppPath(), plugin.preload)
             : undefined
     }
-    console.log('解析后的插件配置:', resolvedPlugin)
     this.plugins.set(plugin.id, resolvedPlugin)
   }
 

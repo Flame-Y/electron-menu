@@ -7,7 +7,7 @@ const apiDocs = ref(api)
 
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Uiko API 手册</h1>
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Mortis API 手册</h1>
     <div class="space-y-4">
       <div v-for="api in apiDocs" :key="api.name" class="bg-gray-50 p-4 rounded-lg">
         <h3 class="text-sm font-medium text-gray-700 mb-2">{{ api.name }}</h3>
