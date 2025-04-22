@@ -35,25 +35,40 @@ function sanitizeFileName(name: string): string {
 /**
  * 为应用程序提取图标
  * @param {AppInfo} app - 包含 DisplayIcon 和 LegalName 属性的应用信息
+ * @returns {boolean} - 是否成功提取图标
  */
-function getIcons(app: AppInfo) {
-  if (!app?.desc) return
+function getIcons(app: AppInfo): boolean {
+  if (!app?.desc) return false
 
   try {
+    // 检查路径是否存在且可访问
+    if (!fs.existsSync(app.desc) && !app.desc.endsWith('.exe')) {
+      console.log(`无效的图标路径: ${app.desc}`)
+      return false
+    }
+
     const buffer = fileIcon(app.desc, 32)
-    if (!buffer) return
+    if (!buffer || buffer.length === 0) {
+      console.log(`无法从 ${app.desc} 提取图标`)
+      return false
+    }
 
     const iconpath = path.join(icondir, `${sanitizeFileName(app.name)}.png`)
 
-    fs.access(iconpath, fs.constants.F_OK, (err) => {
-      if (err) {
-        fs.writeFile(iconpath, buffer, 'base64', (writeErr) => {
-          if (writeErr) console.error('Failed to write icon:', writeErr)
-        })
-      }
-    })
+    // 同步写入文件以便于调试
+    fs.writeFileSync(iconpath, buffer, 'base64')
+
+    // 验证文件大小
+    const stats = fs.statSync(iconpath)
+    if (stats.size === 0) {
+      console.log(`提取的图标文件为空: ${iconpath}`)
+      return false
+    }
+
+    return true
   } catch (e) {
-    console.error('Failed to extract icon:', e)
+    console.error(`提取图标失败 (${app.name}): `, e)
+    return false
   }
 }
 
@@ -121,7 +136,7 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
             .map((word) => word[0])
             .join('')
 
-          // 如果 DisplayName 有中文，解析出拼音 pinyin('汉语拼音', { toneType: 'none' })
+          // 如果 DisplayName 有中文，解析出拼音
           let pinyinResult = ''
           let pinyinShortName = ''
           if (dict.DisplayName) {
@@ -136,21 +151,31 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
               .join('') // 连接所有首字母
               .replace(/[^a-zA-Z]/g, '') // 移除非字母字符
           }
-
+          console.log(app.name, dict, dict.DisplayIcon)
           return {
             name: dict.DisplayName,
-            desc: dict.DisplayIcon || dict.InstallLocation || '',
+            desc:
+              dict.DisplayIcon?.replace(/^"|"$/g, '') ||
+              dict.InstallLocation?.replace(/^"|"$/g, '') ||
+              '',
             type: 'app',
             icon: `app-icon://${encodeURIComponent(sanitizeFileName(dict.DisplayName))}`,
-            keyWords: [dict.DisplayName, pinyinResult, shortName, pinyinShortName], // todo: 关键词检索逻辑优化
+            keyWords: [dict.DisplayName, pinyinResult, shortName, pinyinShortName],
             action: getExecutablePath(dict) || dict.DisplayIcon
           }
         })
         .filter((app) => app !== null) // 过滤掉空值
 
-      // 为每个应用提取图标
-      appList.forEach(getIcons)
-      callback(appList)
+      // 为每个应用提取图标，并处理提取失败的情况
+      appList.forEach((app) => {
+        const iconSuccess = getIcons(app)
+        if (!iconSuccess) {
+          // TODO: 如果图标提取失败，使用默认图标
+        }
+      })
+      //过滤没有action的app
+      const filteredAppList = appList.filter((app) => app.action)
+      callback(filteredAppList)
     } catch (error) {
       console.error('处理应用列表出错:', error)
       callback([])
