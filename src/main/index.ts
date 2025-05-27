@@ -15,10 +15,12 @@ import appSearch from '../core/app-search'
 import path from 'path'
 import os from 'os'
 import { pluginManager } from './browser/plugin-manager'
-import { setupPluginEvents } from './events/pluginEvents'
+import { setupPluginEvents, initializeShortcuts } from './events/pluginEvents'
 import { pluginConfig } from '../renderer/plugins/config'
 import { openFile, openFolder, removeApp } from '../core/app-search/win'
 import { api } from '../common/api'
+import fs from 'fs'
+
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 600,
@@ -64,7 +66,26 @@ function createWindow(): void {
   pluginConfig.forEach((plugin) => {
     pluginManager.registerPlugin(plugin)
   })
-
+  // 读取插件快捷键
+  let pluginShortcuts = '{}'
+  try {
+    pluginShortcuts = fs.readFileSync(
+      path.join(app.getPath('userData'), 'plugin-shortcuts.json'),
+      'utf-8'
+    )
+  } catch (error) {
+    // 如果文件不存在，创建一个空的配置文件
+    fs.writeFileSync(path.join(app.getPath('userData'), 'plugin-shortcuts.json'), '{}', 'utf-8')
+  }
+  const pluginShortcutsData = JSON.parse(pluginShortcuts)
+  Object.entries(pluginShortcutsData).forEach(([pluginId, shortcut]) => {
+    if (typeof shortcut === 'string') {
+      pluginManager.bindPluginShortcut(pluginId, shortcut)
+      globalShortcut.register(shortcut, () => {
+        pluginManager.loadPlugin(pluginId)
+      })
+    }
+  })
   // 设置插件事件，传入主窗口实例
   setupPluginEvents(mainWindow)
 
@@ -117,6 +138,9 @@ app.whenReady().then(() => {
   // })
 
   createWindow()
+
+  // 初始化快捷键配置
+  initializeShortcuts()
 
   app.on('activate', function () {
     // 在 macOS 上，当点击 dock 图标并且没有其他窗口打开时，
@@ -246,7 +270,7 @@ ipcMain.on('open-api-docs', () => {
 })
 
 ipcMain.on('show-notification', (_, { title, body, logo = icon }) => {
-  console.log('show-notification', title, body, logo)
+  // console.log('show-notification', title, body, logo)
   if (!Notification.isSupported()) {
     return false
   }

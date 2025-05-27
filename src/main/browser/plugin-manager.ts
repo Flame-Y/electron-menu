@@ -8,6 +8,7 @@ interface Plugin {
   preload?: string
   view?: BrowserView
   from?: 'npm' | 'local'
+  shortcut?: string
 }
 
 class PluginManager {
@@ -45,7 +46,13 @@ class PluginManager {
     }
     this.plugins.set(plugin.id, resolvedPlugin)
   }
-
+  // 绑定插件快捷键
+  bindPluginShortcut(pluginId: string, shortcut: string) {
+    const plugin = this.plugins.get(pluginId)
+    if (plugin) {
+      plugin.shortcut = shortcut
+    }
+  }
   // 加载插件
   async loadPlugin(pluginId: string) {
     if (!this.currentWindow) {
@@ -63,7 +70,6 @@ class PluginManager {
     const ses = session.fromPartition('<' + plugin.id + '>')
     // 通过 session 注入系统 preload
     ses.setPreloads([path.join(__dirname, '../../out/preload/index.js')])
-    console.log('ses', path.join(__dirname, '../../out/preload/index.js'))
     try {
       // 创建插件视图
       const view = new BrowserView({
