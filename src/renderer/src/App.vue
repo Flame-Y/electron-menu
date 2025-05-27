@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import AppSearch from './components/AppSearch.vue'
 import PluginMarket from './components/PluginMarket.vue'
 import SearchResultsList from './components/SearchResultsList.vue'
+import ConfirmDialog from './components/ConfirmDialog.vue'
+import { useConfirm } from './composables/useConfirm'
 
 defineOptions({
   name: 'App'
@@ -10,6 +12,9 @@ defineOptions({
 
 const showPlugins = ref(false)
 const searchResultsRef = ref()
+
+// 使用确认组件
+const { confirmState, handleConfirm, handleCancel } = useConfirm()
 
 const togglePlugins = async () => {
   showPlugins.value = !showPlugins.value
@@ -55,7 +60,7 @@ const handleSearch = (keyword: string) => {
         >
       </div>
       <!-- 搜索组件 -->
-      <AppSearch @search="handleSearch" />
+      <AppSearch @search="handleSearch" @toggle-plugins="togglePlugins" />
     </div>
     <SearchResultsList ref="searchResultsRef" class="no-drag" />
     <!-- 插件市场 -->
@@ -70,6 +75,18 @@ const handleSearch = (keyword: string) => {
     >
       <PluginMarket v-if="showPlugins" class="mt-4" />
     </Transition>
+
+    <!-- 确认对话框 -->
+    <ConfirmDialog
+      :show="confirmState.show"
+      :title="confirmState.title"
+      :message="confirmState.message"
+      :type="confirmState.type"
+      :confirm-text="confirmState.confirmText"
+      :cancel-text="confirmState.cancelText"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
   </div>
 </template>
 

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { pluginConfig } from '../../../plugins/config'
+import { useConfirm } from '../../composables/useConfirm'
 
 declare const window: Window & typeof globalThis & { electron: { ipcRenderer: any } }
 
 const installedPlugins = ref<any[]>([])
 const activePluginId = ref<string | null>(null)
+const { confirm } = useConfirm()
 
 const fetchInstalledPlugins = async () => {
   try {
@@ -61,6 +63,31 @@ const handlePluginClosed = (_event: any, pluginId: string) => {
   }
 }
 
+const uninstallPlugin = async (plugin: any) => {
+  try {
+    const confirmed = await confirm({
+      title: '确认卸载插件',
+      message: `确定要卸载插件 "${plugin.name}" 吗？卸载后需要重新安装才能使用。`,
+      type: 'danger',
+      confirmText: '卸载',
+      cancelText: '取消'
+    })
+
+    if (!confirmed) return
+
+    const result = await window.electron.ipcRenderer.invoke('uninstall-plugin', plugin.id)
+    if (result.success) {
+      await fetchInstalledPlugins()
+      window.electron.ipcRenderer.send('show-notification', {
+        title: 'Mortis',
+        body: `${plugin.name} 卸载成功`
+      })
+    }
+  } catch (error) {
+    console.error('卸载插件失败:', error)
+  }
+}
+
 onMounted(() => {
   fetchInstalledPlugins()
   window.electron.ipcRenderer.on('plugin-closed', handlePluginClosed)
@@ -76,13 +103,25 @@ onBeforeUnmount(() => {
     <h2 class="text-lg font-medium text-gray-900 mb-4">已安装插件</h2>
     <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
       <div class="space-y-4">
-        <div v-for="plugin in installedPlugins" :key="plugin.id" class="bg-gray-50 p-4 rounded-lg">
+        <div
+          v-for="plugin in installedPlugins"
+          :key="plugin.id"
+          class="bg-gray-50 p-4 rounded-lg relative group hover:bg-gray-100 transition-colors"
+        >
+          <button
+            class="absolute top-[-5px] right-[-5px] w-3 h-3 rounded-full bg-gray-400 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center text-xs z-10"
+            title="卸载插件"
+            @click.stop="uninstallPlugin(plugin)"
+          >
+            ×
+          </button>
+
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-medium text-gray-900">{{ plugin.name }}</h3>
               <p class="text-xs text-gray-500 mt-1">{{ plugin.description || '暂无描述' }}</p>
             </div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center">
               <button
                 class="px-3 py-1 text-xs text-white rounded transition-colors"
                 :class="[
