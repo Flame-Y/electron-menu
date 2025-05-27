@@ -25,5 +25,10 @@ export const mortisAPI = {
   // 添加获取剪贴板图片的方法
   async getClipboardImage() {
     return await asyncIpcSend('getClipboardImage')
+  },
+
+  exitPlugin(pluginId: string) {
+    ipcRenderer.send('close-plugin', { pluginId })
+    return null
   }
 }
