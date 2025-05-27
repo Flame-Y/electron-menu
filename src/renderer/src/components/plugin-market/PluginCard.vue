@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 interface Plugin {
   id: string
   name: string
@@ -7,11 +8,48 @@ interface Plugin {
   author: string
   downloads: number
   category: string
+  from?: 'offical' | 'npm'
+  install?: boolean
+  url: string
 }
 
-defineProps<{
+const props = defineProps<{
   plugin: Plugin
 }>()
+
+const checkInstall = async (plugin: Plugin) => {
+  const result = await window.electron.ipcRenderer.invoke('list-installed-plugins')
+  if (result.success) {
+    plugin.install = result.plugins.some((plugin) => plugin.id === props.plugin.id)
+  }
+  return plugin.install
+}
+onMounted(() => {
+  checkInstall(props.plugin)
+})
+
+const installPlugin = async () => {
+  const { plugin } = props
+  const install = await checkInstall(plugin)
+  if (install) {
+    //todo: 提示已安装
+    return
+  }
+  // 判断插件来源
+  if (plugin.from === 'offical') {
+    console.log('offical')
+  } else {
+    console.log('npm')
+    const result = await window.electron.ipcRenderer.invoke('install-plugin', plugin.url)
+    console.log(plugin)
+    if (result.success) {
+      window.electron.ipcRenderer.send('show-notification', {
+        title: 'Mortis',
+        body: '插件安装成功'
+      })
+    }
+  }
+}
 </script>
 
 <template>
@@ -35,8 +73,9 @@ defineProps<{
           <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">{{ plugin.name }}</h3>
           <button
             class="px-4 py-1.5 rounded-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 hover:opacity-90 transition-opacity text-sm"
+            @click="installPlugin"
           >
-            安装
+            {{ plugin.install ? '已安装' : '安装' }}
           </button>
         </div>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -46,6 +85,9 @@ defineProps<{
           <span class="text-slate-500 dark:text-slate-400">{{ plugin.author }}</span>
           <span class="text-slate-400 dark:text-slate-500">{{ plugin.downloads }}次下载</span>
           <span class="text-slate-400 dark:text-slate-500">{{ plugin.category }}</span>
+          <span class="text-slate-400 dark:text-slate-500">{{
+            plugin.from === 'offical' ? '官方' : 'npm社区'
+          }}</span>
         </div>
       </div>
     </div>

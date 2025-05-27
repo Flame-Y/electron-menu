@@ -1,4 +1,12 @@
-import { app, shell, BrowserWindow, ipcMain, protocol, globalShortcut } from 'electron'
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  protocol,
+  globalShortcut,
+  Notification
+} from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -11,7 +19,6 @@ import { setupPluginEvents } from './events/pluginEvents'
 import { pluginConfig } from '../renderer/plugins/config'
 import { openFile, openFolder, removeApp } from '../core/app-search/win'
 import { api } from '../common/api'
-
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 600,
@@ -236,4 +243,14 @@ function createApiDocsWindow() {
 // 监听打开 API 文档的事件
 ipcMain.on('open-api-docs', () => {
   createApiDocsWindow()
+})
+
+ipcMain.on('show-notification', (_, { title, body, logo = icon }) => {
+  console.log('show-notification', title, body, logo)
+  if (!Notification.isSupported()) {
+    return false
+  }
+  const notification = new Notification({ title, body, icon: logo, silent: true })
+  notification.show()
+  return true
 })
