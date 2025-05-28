@@ -327,7 +327,10 @@ export function setupPluginEvents(window: BrowserWindow) {
         name,
         indexPath: path.join(pluginPath, 'node_modules', name, 'index.html').replace(/\\/g, '/'),
         preload: path.join(pluginPath, 'node_modules', name, 'preload.js').replace(/\\/g, '/'),
-        from: 'npm'
+        from: 'npm',
+        configPath: fs.existsSync(path.join(pluginPath, 'node_modules', name, 'package.json'))
+          ? fs.readFileSync(path.join(pluginPath, 'node_modules', name, 'package.json'), 'utf-8')
+          : null
       }))
       console.log('processedPlugins', processedPlugins)
       processedPlugins.forEach((plugin) => {

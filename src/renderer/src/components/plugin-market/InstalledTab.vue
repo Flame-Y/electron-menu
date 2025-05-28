@@ -23,7 +23,8 @@ const fetchInstalledPlugins = async () => {
           description: plugin.description || '已安装的 NPM 插件',
           pluginType: 'ui',
           indexPath: plugin.indexPath,
-          preload: plugin.preload
+          preload: plugin.preload,
+          logo: JSON.parse(plugin.configPath).logo
         }))
       ]
     }
@@ -88,6 +89,36 @@ const uninstallPlugin = async (plugin: any) => {
   }
 }
 
+const setPluginLogo = (element: HTMLElement | null, logoUrl: string) => {
+  if (!element) return
+
+  // 如果没有logo，设置默认样式
+  if (!logoUrl) {
+    element.style.backgroundColor = '#e5e7eb'
+    element.style.backgroundImage = `url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPHN2ZyB4PSIxMiIgeT0iMTIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJTNi40OCAyMiAxMiAyMlMyMiAxNy41MiAyMiAxMlMxNy41MiAyIDEyIDJaIiBmaWxsPSIjOUNBM0FGIi8+CjxwYXRoIGQ9Ik0xMiA2QzE0LjIxIDYgMTYgNy43OSAxNiAxMEM2IDE2IDYgMTQuMjEgNiAxMkM2IDkuNzkgNy43OSA4IDEwIDhDMTAuNzQgOCAxMS4zOCA4LjM1IDExLjggOC44N0MxMS4xOCA5LjE2IDEwLjYyIDkuNTYgMTAuMTYgMTBIMTBDOC44OSAxMCA4IDEwLjg5IDggMTJTOC44OSAxNCAxMCAxNEg5Ljk5SDE0QzE1LjExIDE0IDE2IDEzLjExIDE2IDEyUzE1LjExIDEwIDE0IDEwWiIgZmlsbD0iIzY4NzI4MCIvPgo8L3N2Zz4KPC9zdmc+Cg==')`
+    element.style.backgroundSize = 'cover'
+    element.style.backgroundPosition = 'center'
+    return
+  }
+
+  // 创建Image对象来预加载图片
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  img.onload = () => {
+    element.style.backgroundImage = `url('${logoUrl}')`
+    element.style.backgroundSize = 'cover'
+    element.style.backgroundPosition = 'center'
+  }
+  img.onerror = () => {
+    // 图片加载失败时，设置默认样式
+    element.style.backgroundColor = '#e5e7eb'
+    element.style.backgroundImage = `url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPHN2ZyB4PSIxMiIgeT0iMTIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJTNi40OCAyMiAxMiAyMlMyMiAxNy41MiAyMiAxMlMxNy41MiAyIDEyIDJaIiBmaWxsPSIjOUNBM0FGIi8+CjxwYXRoIGQ9Ik0xMiA2QzE0LjIxIDYgMTYgNy43OSAxNiAxMEM2IDE2IDYgMTQuMjEgNiAxMkM2IDkuNzkgNy43OSA4IDEwIDhDMTAuNzQgOCAxMS4zOCA4LjM1IDExLjggOC44N0MxMS4xOCA5LjE2IDEwLjYyIDkuNTYgMTAuMTYgMTBIMTBDOC44OSAxMCA4IDEwLjg5IDggMTJTOC44OSAxNCAxMCAxNEg5Ljk5SDE0QzE1LjExIDE0IDE2IDEzLjExIDE2IDEyUzE1LjExIDEwIDE0IDEwWiIgZmlsbD0iIzY4NzI4MCIvPgo8L3N2Zz4KPC9zdmc+Cg==')`
+    element.style.backgroundSize = 'cover'
+    element.style.backgroundPosition = 'center'
+  }
+  img.src = logoUrl
+}
+
 onMounted(() => {
   fetchInstalledPlugins()
   window.electron.ipcRenderer.on('plugin-closed', handlePluginClosed)
@@ -116,10 +147,13 @@ onBeforeUnmount(() => {
             ×
           </button>
 
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-medium text-gray-900">{{ plugin.name }}</h3>
-              <p class="text-xs text-gray-500 mt-1">{{ plugin.description || '暂无描述' }}</p>
+          <div class="flex items-center">
+            <div :ref="(el) => setPluginLogo(el, plugin.logo)" class="w-10 h-10 rounded-full"></div>
+            <div class="ml-3 flex-1">
+              <h3 class="text-sm font-medium text-gray-900 text-left">{{ plugin.name }}</h3>
+              <p class="text-xs text-gray-500 mt-1 text-left">
+                {{ plugin.description || '暂无描述' }}
+              </p>
             </div>
             <div class="flex items-center">
               <button

@@ -9,6 +9,7 @@ interface Plugin {
   view?: BrowserView
   from?: 'npm' | 'local'
   shortcut?: string
+  logo?: string
 }
 
 class PluginManager {
@@ -42,7 +43,8 @@ class PluginManager {
           ? plugin.preload
           : plugin.preload
             ? path.join(app.getAppPath(), plugin.preload)
-            : undefined
+            : undefined,
+      logo: plugin.logo
     }
     this.plugins.set(plugin.id, resolvedPlugin)
   }
