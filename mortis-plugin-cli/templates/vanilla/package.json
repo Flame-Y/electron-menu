@@ -1,0 +1,15 @@
+{
+  "name": "vanilla-plugin-template",
+  "version": "1.0.0",
+  "description": "Vanilla JavaScript plugin template for Mortis",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vite": "^4.4.0"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "mortis-plugin-cli",
+  "version": "1.0.0",
+  "description": "Mortis Plugin CLI",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mortis-plugin": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/cli.ts",
+    "dev": "ts-node src/cli.ts"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.3.0",
+    "inquirer": "^8.2.6",
+    "nanospinner": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8.2.6",
+    "@types/node": "^20.11.24",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
