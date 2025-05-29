@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useConfirm } from '../../composables/useConfirm'
+const { confirm } = useConfirm()
+
 interface Plugin {
   id: string
   name: string
@@ -11,6 +14,7 @@ interface Plugin {
   from?: 'offical' | 'npm'
   install?: boolean
   url: string
+  npmUrl?: string
 }
 
 const props = defineProps<{
@@ -27,27 +31,45 @@ const checkInstall = async (plugin: Plugin) => {
 onMounted(() => {
   checkInstall(props.plugin)
 })
+const uninstallPlugin = async (plugin: Plugin) => {
+  try {
+    const confirmed = await confirm({
+      title: '确认卸载插件',
+      message: `确定要卸载插件 "${plugin.name}" 吗？卸载后需要重新安装才能使用。`,
+      type: 'danger',
+      confirmText: '卸载',
+      cancelText: '取消'
+    })
 
+    if (!confirmed) return
+
+    const result = await window.electron.ipcRenderer.invoke('uninstall-plugin', plugin.id)
+    if (result.success) {
+      plugin.install = false
+      window.electron.ipcRenderer.send('show-notification', {
+        title: 'Mortis',
+        body: `${plugin.name} 卸载成功`
+      })
+    }
+  } catch (error) {
+    console.error('卸载插件失败:', error)
+  }
+}
 const installPlugin = async () => {
   const { plugin } = props
   const install = await checkInstall(plugin)
   if (install) {
-    //todo: 提示已安装
+    // 提示已安装，二次确认是否卸载
+    uninstallPlugin(plugin)
     return
   }
-  // 判断插件来源
-  if (plugin.from === 'offical') {
-    console.log('offical')
-  } else {
-    console.log('npm')
-    const result = await window.electron.ipcRenderer.invoke('install-plugin', plugin.url)
-    console.log(plugin)
-    if (result.success) {
-      window.electron.ipcRenderer.send('show-notification', {
-        title: 'Mortis',
-        body: '插件安装成功'
-      })
-    }
+  const result = await window.electron.ipcRenderer.invoke('install-plugin', plugin.url)
+  if (result.success) {
+    plugin.install = true
+    window.electron.ipcRenderer.send('show-notification', {
+      title: 'Mortis',
+      body: '插件安装成功'
+    })
   }
 }
 </script>
@@ -57,16 +79,18 @@ const installPlugin = async () => {
     class="backdrop-panel rounded-xl p-4 hover:ring-1 ring-slate-200 dark:ring-slate-800 transition-all duration-200"
   >
     <div class="flex items-center space-x-4">
-      <div
-        class="w-14 h-14 shrink-0 rounded-xl flex items-center justify-center text-2xl"
-        :class="[
-          'bg-gradient-to-br',
-          'from-slate-100 to-slate-200',
-          'dark:from-slate-800 dark:to-slate-900'
-        ]"
-      >
-        {{ plugin.icon }}
-      </div>
+      <a :href="plugin.npmUrl" target="_blank">
+        <div
+          class="w-14 h-14 shrink-0 rounded-xl flex items-center justify-center text-2xl"
+          :class="[
+            'bg-gradient-to-br',
+            'from-slate-100 to-slate-200',
+            'dark:from-slate-800 dark:to-slate-900'
+          ]"
+        >
+          {{ plugin.icon }}
+        </div>
+      </a>
 
       <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between">
@@ -78,7 +102,7 @@ const installPlugin = async () => {
             {{ plugin.install ? '已安装' : '安装' }}
           </button>
         </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
           {{ plugin.description }}
         </p>
         <div class="flex items-center space-x-4 mt-2 text-sm">

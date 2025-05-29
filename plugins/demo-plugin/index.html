@@ -21,13 +21,11 @@
     </div>
     <script>
         function sendMessage() {
-            console.log('sendMessage')
             window.electron.ipcRenderer.send('plugin-message', {
                 from: 'demo-plugin',
                 content: 'Hello from plugin!'
             })
-            console.log('uiko', window.uiko)
-            window.uiko.copyText('Hello from plugin!!!')
+            window.mortis.copyText('Hello from plugin!!!')
         }
         function closePlugin() {
             window.electron.ipcRenderer.invoke('unload-plugin', 'demo-plugin')

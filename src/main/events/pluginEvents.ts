@@ -246,6 +246,7 @@ export function setupPluginEvents(window: BrowserWindow) {
 
   // 处理截图请求
   ipcMain.handle('screenshot:capture', async () => {
+    console.log('screenshot:capture')
     const result = await screenWindow()
     return result
   })
@@ -332,7 +333,6 @@ export function setupPluginEvents(window: BrowserWindow) {
           ? fs.readFileSync(path.join(pluginPath, 'node_modules', name, 'package.json'), 'utf-8')
           : null
       }))
-      console.log('processedPlugins', processedPlugins)
       processedPlugins.forEach((plugin) => {
         pluginManager.registerPlugin(plugin)
       })

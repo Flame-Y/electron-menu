@@ -90,9 +90,8 @@
         // 处理剪贴板图片
         async function handlePasteImage() {
             try {
-                // 使用 uiko API 获取剪贴板图片
-                const nativeImage = await window.uiko.getClipboardImage();
-                console.log('nativeImage', nativeImage)
+                // 使用 mortis API 获取剪贴板图片
+                const nativeImage = await window.mortis.getClipboardImage();
                 if (nativeImage) {
                     // 将 base64 转换为 Blob
                     const base64Data = nativeImage.replace(/^data:image\/\w+;base64,/, '');
@@ -144,7 +143,7 @@
 
         function copyResult() {
             const text = document.getElementById('result').textContent;
-            window.uiko.copyText(text);
+            window.mortis.copyText(text);
             const button = event.target;
             const originalText = button.textContent;
             button.textContent = '已复制';

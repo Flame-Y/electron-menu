@@ -1,18 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
-contextBridge.exposeInMainWorld('electron', {
-  screenshot: {
-    capture: () => ipcRenderer.invoke('screenshot:capture')
-  },
-  ipcRenderer: {
-    send: (channel, data) => {
-      ipcRenderer.send(channel, data)
-    },
-    on: (channel, func) => {
-      ipcRenderer.on(channel, (_, ...args) => func(...args))
-    },
-    removeListener: (channel, func) => {
-      ipcRenderer.removeListener(channel, func)
-    }
-  }
+// 使用更具体的命名空间
+contextBridge.exposeInMainWorld('mortisScreenshot', {
+  capture: () => ipcRenderer.invoke('screenshot:capture')
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import PluginCard from './PluginCard.vue'
-import { plugins } from '../../../plugins/explor-plugin-list'
+import { plugins } from '../../../plugins/explor-plugin-list.js'
 
 const categories = ['全部', '工具', '效率', '娱乐', '开发']
 const activeCategory = ref('全部')

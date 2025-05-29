@@ -27,6 +27,28 @@ export const api: API[] = [
     name: 'exitPlugin',
     description: '退出插件',
     params: [],
-    returns: ''
+    returns: 'null'
+  },
+  {
+    name: 'notify',
+    description: '通知',
+    params: [
+      {
+        name: 'title',
+        type: 'string',
+        description: '通知标题'
+      },
+      {
+        name: 'message',
+        type: 'string',
+        description: '通知内容'
+      },
+      {
+        name: 'icon',
+        type: 'string',
+        description: '通知图标'
+      }
+    ],
+    returns: 'null'
   }
 ]

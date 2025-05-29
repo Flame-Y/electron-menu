@@ -30,6 +30,7 @@
     "axios": "^1.7.9",
     "cross-spawn": "^7.0.6",
     "extract-file-icon": "^0.3.2",
+    "fs-extra": "^11.3.0",
     "pinyin-pro": "^3.26.0",
     "remixicon": "^4.6.0"
   },

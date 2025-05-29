@@ -39,12 +39,16 @@
     </div>
 
     <script>
+        function closePlugin() {
+            // window.electron.ipcRenderer.send('close-plugin', { pluginId: 'screenshot' })
+            window.mortis.exitPlugin('screenshot')
+        }
+
         async function startScreenshot() {
             try {
-                const imageData = await window.electron.screenshot.capture()
+                const imageData = await window.mortisScreenshot.capture()
                 if (imageData) {
                     console.log('截图成功:', imageData)
-                    // 处理截图结果
                 } else {
                     console.error('截图失败: 未获取到图片数据')
                 }
@@ -52,6 +56,9 @@
                 console.error('截图错误:', error)
             }
         }
+        // 默认直接运行
+        startScreenshot()
+        closePlugin()
     </script>
 </body>
 

@@ -97,7 +97,6 @@ const updateShortcut = async () => {
 const fetchInstalledPlugins = async () => {
   try {
     const plugins = await window.electron.ipcRenderer.invoke('get-installed-plugins')
-    console.log('plugins', plugins)
     installedPlugins.value = plugins
   } catch (error) {
     console.error('获取插件列表失败:', error)

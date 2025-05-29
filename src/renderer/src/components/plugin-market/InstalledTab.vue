@@ -24,7 +24,7 @@ const fetchInstalledPlugins = async () => {
           pluginType: 'ui',
           indexPath: plugin.indexPath,
           preload: plugin.preload,
-          logo: JSON.parse(plugin.configPath).logo
+          logo: JSON.parse(plugin.configPath)?.logo
         }))
       ]
     }

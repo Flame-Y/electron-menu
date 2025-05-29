@@ -9,15 +9,15 @@ export const pluginConfig = [
   {
     id: 'screenshot',
     name: '截图',
-    pluginType: 'system',
+    pluginType: 'ui',
     indexPath: './plugins/screenshot/index.html',
     preload: './plugins/screenshot/preload.js'
-  },
-  {
-    id: 'ocr',
-    name: 'OCR',
-    pluginType: 'system',
-    indexPath: './plugins/ocr/index.html',
-    preload: './plugins/ocr/preload.js'
   }
+  // {
+  //   id: 'ocr',
+  //   name: 'OCR',
+  //   pluginType: 'system',
+  //   indexPath: './plugins/ocr/index.html',
+  //   preload: './plugins/ocr/preload.js'
+  // }
 ]

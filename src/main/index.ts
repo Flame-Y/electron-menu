@@ -233,7 +233,6 @@ ipcMain.on('msg-trigger', async (event, { type, data }) => {
     try {
       // 调用映射的 API 方法
       const result = await api[type](data)
-      // console.log('result', result)
       event.returnValue = result
     } catch (error) {
       console.error(`Error executing ${type}:`, error)
@@ -270,7 +269,6 @@ ipcMain.on('open-api-docs', () => {
 })
 
 ipcMain.on('show-notification', (_, { title, body, logo = icon }) => {
-  // console.log('show-notification', title, body, logo)
   if (!Notification.isSupported()) {
     return false
   }
