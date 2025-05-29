@@ -79,7 +79,7 @@ const openApiDocs = () => {
             v-model="pluginUrl"
             type="text"
             class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-            placeholder="请输入插件的 NPM 包名"
+            placeholder="请输入插件的 NPM 包地址"
             :disabled="installStatus === 'loading'"
           />
           <button

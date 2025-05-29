@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useConfirm } from '../../composables/useConfirm'
+const { confirm } = useConfirm()
+
 interface Plugin {
   id: string
   name: string
@@ -27,12 +30,36 @@ const checkInstall = async (plugin: Plugin) => {
 onMounted(() => {
   checkInstall(props.plugin)
 })
+const uninstallPlugin = async (plugin: Plugin) => {
+  try {
+    const confirmed = await confirm({
+      title: '确认卸载插件',
+      message: `确定要卸载插件 "${plugin.name}" 吗？卸载后需要重新安装才能使用。`,
+      type: 'danger',
+      confirmText: '卸载',
+      cancelText: '取消'
+    })
 
+    if (!confirmed) return
+
+    const result = await window.electron.ipcRenderer.invoke('uninstall-plugin', plugin.id)
+    if (result.success) {
+      plugin.install = false
+      window.electron.ipcRenderer.send('show-notification', {
+        title: 'Mortis',
+        body: `${plugin.name} 卸载成功`
+      })
+    }
+  } catch (error) {
+    console.error('卸载插件失败:', error)
+  }
+}
 const installPlugin = async () => {
   const { plugin } = props
   const install = await checkInstall(plugin)
   if (install) {
-    //todo: 提示已安装
+    // 提示已安装，二次确认是否卸载
+    uninstallPlugin(plugin)
     return
   }
   // 判断插件来源
@@ -41,8 +68,9 @@ const installPlugin = async () => {
   } else {
     console.log('npm')
     const result = await window.electron.ipcRenderer.invoke('install-plugin', plugin.url)
-    console.log(plugin)
+    console.log(result)
     if (result.success) {
+      plugin.install = true
       window.electron.ipcRenderer.send('show-notification', {
         title: 'Mortis',
         body: '插件安装成功'
@@ -78,7 +106,7 @@ const installPlugin = async () => {
             {{ plugin.install ? '已安装' : '安装' }}
           </button>
         </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
           {{ plugin.description }}
         </p>
         <div class="flex items-center space-x-4 mt-2 text-sm">
