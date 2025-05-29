@@ -7,7 +7,7 @@
 
     <main class="app-main">
       <div class="action-section">
-        <button class="send-button" @click="handleSendMessage">发送消息到 Mortis</button>
+        <button class="send-button" id="sendButton">发送消息到 Mortis</button>
       </div>
 
       <div class="info-section">
@@ -15,19 +15,15 @@
         <ul>
           <li>框架: Vue {{ vueVersion }}</li>
           <li>构建工具: Vite</li>
-          <li>语言: TypeScript</li>
+          <li>语言: JavaScript</li>
         </ul>
       </div>
     </main>
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { version as vueVersion } from 'vue'
-
-const handleSendMessage = () => {
-  alert('发送消息到 Mortis')
-}
 </script>
 
 <style scoped>
@@ -35,6 +31,7 @@ const handleSendMessage = () => {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;
+  background-color: #f0f0f0;
 }
 
 .app-header {

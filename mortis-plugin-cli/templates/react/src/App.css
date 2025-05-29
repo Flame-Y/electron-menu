@@ -1,0 +1,69 @@
+.app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.app-header h1 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.app-header p {
+  color: #7f8c8d;
+  font-size: 16px;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.action-section,
+.info-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.action-section {
+  text-align: center;
+}
+
+.send-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
+}
+
+.send-button:hover {
+  background-color: #0056b3;
+}
+
+.info-section h2 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+.info-section ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.info-section li {
+  margin: 8px 0;
+  color: #7f8c8d;
+}
