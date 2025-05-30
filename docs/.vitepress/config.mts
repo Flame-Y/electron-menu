@@ -25,5 +25,6 @@ export default defineConfig({
       message: '基于 MIT 许可发布',
       copyright: `Copyright © ${new Date().getFullYear()} Flame_Y`
     }
-  }
+  },
+  head: [['meta', { name: 'theme-color', content: '#bd34fe' }]]
 })
