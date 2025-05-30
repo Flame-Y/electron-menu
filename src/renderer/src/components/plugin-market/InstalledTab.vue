@@ -89,6 +89,7 @@ const uninstallPlugin = async (plugin: any) => {
   }
 }
 
+// 同时支持url和emoji
 const setPluginLogo = (element: HTMLElement | null, logoUrl: string) => {
   if (!element) return
 
@@ -98,16 +99,34 @@ const setPluginLogo = (element: HTMLElement | null, logoUrl: string) => {
     element.style.backgroundImage = `url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPHN2ZyB4PSIxMiIgeT0iMTIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJTNi40OCAyMiAxMiAyMlMyMiAxNy41MiAyMiAxMlMxNy41MiAyIDEyIDJaIiBmaWxsPSIjOUNBM0FGIi8+CjxwYXRoIGQ9Ik0xMiA2QzE0LjIxIDYgMTYgNy43OSAxNiAxMEM2IDE2IDYgMTQuMjEgNiAxMkM2IDkuNzkgNy43OSA4IDEwIDhDMTAuNzQgOCAxMS4zOCA4LjM1IDExLjggOC44N0MxMS4xOCA5LjE2IDEwLjYyIDkuNTYgMTAuMTYgMTBIMTBDOC44OSAxMCA4IDEwLjg5IDggMTJTOC44OSAxNCAxMCAxNEg5Ljk5SDE0QzE1LjExIDE0IDE2IDEzLjExIDE2IDEyUzE1LjExIDEwIDE0IDEwWiIgZmlsbD0iIzY4NzI4MCIvPgo8L3N2Zz4KPC9zdmc+Cg==')`
     element.style.backgroundSize = 'cover'
     element.style.backgroundPosition = 'center'
+    element.textContent = ''
     return
   }
 
-  // 创建Image对象来预加载图片
+  // 检查是否是 emoji（单个字符且不是 URL）
+  const isEmoji = logoUrl.length <= 4 && !logoUrl.startsWith('http') && !logoUrl.startsWith('data:')
+
+  if (isEmoji) {
+    // 如果是 emoji，直接显示文本
+    element.style.backgroundImage = 'none'
+    element.style.backgroundColor = '#f3f4f6'
+    element.style.display = 'flex'
+    element.style.alignItems = 'center'
+    element.style.justifyContent = 'center'
+    element.style.fontSize = '20px'
+    element.textContent = logoUrl
+    return
+  }
+
+  // 如果是 URL，创建Image对象来预加载图片
   const img = new Image()
   img.crossOrigin = 'anonymous'
   img.onload = () => {
     element.style.backgroundImage = `url('${logoUrl}')`
     element.style.backgroundSize = 'cover'
     element.style.backgroundPosition = 'center'
+    element.style.backgroundColor = 'transparent'
+    element.textContent = ''
   }
   img.onerror = () => {
     // 图片加载失败时，设置默认样式
@@ -115,6 +134,7 @@ const setPluginLogo = (element: HTMLElement | null, logoUrl: string) => {
     element.style.backgroundImage = `url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPHN2ZyB4PSIxMiIgeT0iMTIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJTNi40OCAyMiAxMiAyMlMyMiAxNy41MiAyMiAxMlMxNy41MiAyIDEyIDJaIiBmaWxsPSIjOUNBM0FGIi8+CjxwYXRoIGQ9Ik0xMiA2QzE0LjIxIDYgMTYgNy43OSAxNiAxMEM2IDE2IDYgMTQuMjEgNiAxMkM2IDkuNzkgNy43OSA4IDEwIDhDMTAuNzQgOCAxMS4zOCA4LjM1IDExLjggOC44N0MxMS4xOCA5LjE2IDEwLjYyIDkuNTYgMTAuMTYgMTBIMTBDOC44OSAxMCA4IDEwLjg5IDggMTJTOC44OSAxNCAxMCAxNEg5Ljk5SDE0QzE1LjExIDE0IDE2IDEzLjExIDE2IDEyUzE1LjExIDEwIDE0IDEwWiIgZmlsbD0iIzY4NzI4MCIvPgo8L3N2Zz4KPC9zdmc+Cg==')`
     element.style.backgroundSize = 'cover'
     element.style.backgroundPosition = 'center'
+    element.textContent = ''
   }
   img.src = logoUrl
 }

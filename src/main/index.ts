@@ -276,3 +276,34 @@ ipcMain.on('show-notification', (_, { title, body, logo = icon }) => {
   notification.show()
   return true
 })
+
+// 添加新的 IPC 处理器
+ipcMain.handle('load-plugin-from-path', async (_event, pluginPath: string) => {
+  try {
+    // 从路径中提取插件信息
+    const pluginDir = path.dirname(pluginPath)
+    const packageJsonPath = path.join(pluginDir, 'package.json')
+
+    if (fs.existsSync(packageJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+
+      // 调用现有的插件加载逻辑
+      const result = await pluginManager.loadPlugin(packageJson.name)
+
+      return {
+        success: true,
+        pluginName: packageJson.name
+      }
+    } else {
+      return {
+        success: false,
+        error: '插件配置文件不存在'
+      }
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: '加载插件失败: ' + error.message
+    }
+  }
+})

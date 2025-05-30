@@ -10,6 +10,7 @@ interface App {
   type: string
   keyWords: string[]
   action: string
+  isPlugin?: boolean
 }
 
 const searchResults = ref<App[]>([])
@@ -77,10 +78,35 @@ const closeContextMenu = () => {
 }
 
 // 处理菜单操作
-const handleOpenApp = (app: App) => {
-  console.log('openfile')
+const handleOpenApp = async (app: App) => {
+  console.log('openfile', app)
 
-  window.electron.ipcRenderer.invoke('open-file', app.action)
+  try {
+    // 检查是否是插件 - 只使用简单的字符串检查
+    const isPlugin =
+      app.type === 'plugin' ||
+      app.isPlugin ||
+      (app.action && app.action.includes('node_modules') && app.action.endsWith('.html'))
+
+    if (isPlugin) {
+      // 如果是插件，通过 IPC 获取插件名称并加载
+      const result = await window.electron.ipcRenderer.invoke('load-plugin-from-path', app.action)
+
+      if (result.success) {
+        console.log('插件启动成功:', result.pluginName)
+      } else {
+        console.error('插件启动失败:', result.error)
+      }
+    } else {
+      // 如果是普通应用，使用 open-file IPC
+      const result = await window.electron.ipcRenderer.invoke('open-file', app.action)
+      if (!result.success) {
+        console.error('打开应用失败:', result.error)
+      }
+    }
+  } catch (error) {
+    console.error('打开应用出错:', error)
+  }
 }
 
 const handleOpenFolder = (app: App) => {

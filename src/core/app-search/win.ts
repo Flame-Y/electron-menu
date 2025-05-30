@@ -17,6 +17,20 @@ interface AppInfo {
   action: string
 }
 
+interface PluginInfo {
+  name: string
+  version: string
+  description: string
+  logo?: string
+  cmds?: string[]
+  main?: string
+}
+
+interface PluginAppInfo extends AppInfo {
+  isPlugin: boolean
+  pluginPath?: string
+}
+
 const icondir = path.join(os.tmpdir(), 'ProcessIcon')
 
 // 确保图标目录存在
@@ -96,7 +110,7 @@ function executePowerShell(cmd, callback) {
  * 获取已安装应用程序列表
  * @param {function} callback - 处理应用程序列表的回调函数
  */
-function getAppList(callback: (apps: AppInfo[]) => void) {
+function getAppList(callback: (apps: PluginAppInfo[]) => void) {
   const filterValues =
     'Select-Object DisplayName,DisplayIcon,UninstallString,DisplayVersion,InstallDate,Publisher,InstallLocation'
   const localMachine = `Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | ${filterValues}`
@@ -116,42 +130,39 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
         .trim()
         .replace(/\r\n[ ]{10,}/g, '')
         .split('\r\n\r\n')
-        .filter((app) => app.trim()) // 过滤空字符串
+        .filter((app) => app.trim())
 
-      const appList = apps
+      const appList: PluginAppInfo[] = apps
         .map((app) => {
           const dict: { [key: string]: string } = {}
           app.split('\r\n').forEach((line) => {
             if (line) {
               const [key, ...valueParts] = line.split(/\s+:\s*/)
-              const value = valueParts.join(':').trim() // 处理值中可能包含冒号的情况
+              const value = valueParts.join(':').trim()
               if (key && value) dict[key] = value
             }
           })
 
           if (!dict.DisplayName) return null
 
-          // 将缩写加入到 keyWords 中
           const shortName = dict.DisplayName.split(' ')
             .map((word) => word[0])
             .join('')
 
-          // 如果 DisplayName 有中文，解析出拼音
           let pinyinResult = ''
           let pinyinShortName = ''
           if (dict.DisplayName) {
-            // 将原始字符串按空格分割，分别转换拼音后再用原有的空格重新连接
             pinyinResult = dict.DisplayName.split(' ')
               .map((word) => pinyin(word, { toneType: 'none' }).replace(/\s+/g, ''))
               .join(' ')
 
             pinyinShortName = pinyin(dict.DisplayName, { toneType: 'none' })
               .split(' ')
-              .map((word) => word.charAt(0)) // 获取每个拼音的首字母
-              .join('') // 连接所有首字母
-              .replace(/[^a-zA-Z]/g, '') // 移除非字母字符
+              .map((word) => word.charAt(0))
+              .join('')
+              .replace(/[^a-zA-Z]/g, '')
           }
-          console.log(app.name, dict, dict.DisplayIcon)
+
           return {
             name: dict.DisplayName,
             desc:
@@ -161,21 +172,30 @@ function getAppList(callback: (apps: AppInfo[]) => void) {
             type: 'app',
             icon: `app-icon://${encodeURIComponent(sanitizeFileName(dict.DisplayName))}`,
             keyWords: [dict.DisplayName, pinyinResult, shortName, pinyinShortName],
-            action: getExecutablePath(dict) || dict.DisplayIcon
+            action: getExecutablePath(dict) || dict.DisplayIcon,
+            isPlugin: false
           }
         })
-        .filter((app) => app !== null) // 过滤掉空值
+        .filter((app) => app !== null)
 
-      // 为每个应用提取图标，并处理提取失败的情况
+      // 为每个应用提取图标
       appList.forEach((app) => {
-        const iconSuccess = getIcons(app)
-        if (!iconSuccess) {
-          // TODO: 如果图标提取失败，使用默认图标
+        if (!app.isPlugin) {
+          const iconSuccess = getIcons(app)
+          if (!iconSuccess) {
+            // TODO: 如果图标提取失败，使用默认图标
+          }
         }
       })
-      //过滤没有action的app
-      const filteredAppList = appList.filter((app) => app.action)
-      callback(filteredAppList)
+
+      // 获取插件列表
+      const pluginList = getPluginList()
+
+      // 合并应用和插件列表
+      const combinedList = [...appList.filter((app) => app.action), ...pluginList]
+
+      console.log(`找到 ${appList.length} 个应用程序和 ${pluginList.length} 个插件`)
+      callback(combinedList)
     } catch (error) {
       console.error('处理应用列表出错:', error)
       callback([])
@@ -239,6 +259,7 @@ function getSteamAppId(installPath: string): string | null {
   }
   return null
 }
+
 /**
  * 使用卸载命令卸载应用程序
  * @param {string} command - 应用程序的卸载命令
@@ -278,18 +299,183 @@ function openFolder(folderPath: string, callback: (error: string | null) => void
  * 打开文件
  * @param {string} filePath - 文件路径
  */
-function openFile(filePath: string, callback: (error: string | null) => void) {
+function openFile(filePath: string, callback: (error: string | null) => void, isPlugin = false) {
   if (filePath) {
-    child.exec(`start "" "${filePath}"`, { encoding: 'buffer' }, (err, _stdout, stderr) => {
-      if (err) {
-        callback(iconv.decode(stderr, 'cp936'))
-      } else {
-        callback(null)
+    if (isPlugin) {
+      // 如果是插件，通过现有的 load-plugin IPC 方法启动
+      try {
+        const pluginPath = path.dirname(filePath)
+        const packageJsonPath = path.join(pluginPath, 'package.json')
+
+        if (fs.existsSync(packageJsonPath)) {
+          const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+
+          // 使用现有的 load-plugin IPC 方法
+          const { ipcRenderer } = require('electron')
+          ipcRenderer
+            .invoke('load-plugin', packageJson.name)
+            .then((result) => {
+              if (result.success) {
+                console.log('插件启动成功:', packageJson.name)
+                callback(null)
+              } else {
+                console.error('插件启动失败:', result.error)
+                callback('插件启动失败: ' + result.error)
+              }
+            })
+            .catch((error) => {
+              console.error('插件启动异常:', error)
+              callback('插件启动异常: ' + error.message)
+            })
+        } else {
+          callback('插件配置文件不存在')
+        }
+      } catch (error) {
+        console.error('启动插件失败:', error)
+        callback('启动插件失败: ' + error.message)
       }
-    })
+    } else {
+      child.exec(`start "" "${filePath}"`, { encoding: 'buffer' }, (err, _stdout, stderr) => {
+        if (err) {
+          callback(iconv.decode(stderr, 'cp936'))
+        } else {
+          callback(null)
+        }
+      })
+    }
   } else {
     callback('File path not found!')
   }
+}
+
+// 添加获取插件列表的函数
+function getPluginList(): PluginAppInfo[] {
+  const pluginApps: PluginAppInfo[] = []
+
+  try {
+    // 获取插件安装路径
+    const pluginBasePath = path.join(
+      os.homedir(),
+      'AppData',
+      'Roaming',
+      'electron-menu',
+      'plugins',
+      'node_modules'
+    )
+
+    if (!fs.existsSync(pluginBasePath)) {
+      console.log('插件目录不存在:', pluginBasePath)
+      return pluginApps
+    }
+
+    // 遍历插件目录，处理符号链接
+    const items = fs.readdirSync(pluginBasePath, { withFileTypes: true })
+    console.log(
+      '所有项目:',
+      items.map((item) => ({
+        name: item.name,
+        isDir: item.isDirectory(),
+        isSymlink: item.isSymbolicLink()
+      }))
+    )
+
+    const pluginDirs = items
+      .filter((dirent) => {
+        // 包含普通目录和符号链接目录
+        if (dirent.isDirectory()) return true
+        if (dirent.isSymbolicLink()) {
+          // 检查符号链接是否指向目录
+          try {
+            const linkPath = path.join(pluginBasePath, dirent.name)
+            const stats = fs.statSync(linkPath) // 这会跟随符号链接
+            return stats.isDirectory()
+          } catch (error) {
+            console.log(`符号链接检查失败: ${dirent.name}`, error)
+            return false
+          }
+        }
+        return false
+      })
+      .map((dirent) => dirent.name)
+      .filter((name) => name !== '.bin') // 排除 .bin 目录
+
+    console.log('插件目录:', pluginDirs)
+
+    for (const pluginDir of pluginDirs) {
+      const pluginPath = path.join(pluginBasePath, pluginDir)
+      const packageJsonPath = path.join(pluginPath, 'package.json')
+
+      console.log(`检查插件: ${pluginDir}, package.json 路径: ${packageJsonPath}`)
+
+      if (fs.existsSync(packageJsonPath)) {
+        try {
+          const packageJson: PluginInfo = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+          console.log(`成功读取插件 ${pluginDir} 的 package.json:`, {
+            name: packageJson.name,
+            cmds: packageJson.cmds,
+            description: packageJson.description
+          })
+
+          // 构建关键词数组
+          const keyWords = [
+            packageJson.name,
+            ...(packageJson.cmds || []), // 将 cmds 作为关键词
+            packageJson.description || ''
+          ].filter(Boolean)
+
+          // 添加拼音支持
+          const pinyinKeyWords: string[] = []
+          keyWords.forEach((keyword) => {
+            if (keyword) {
+              const pinyinResult = pinyin(keyword, { toneType: 'none' }).replace(/\s+/g, '')
+              const pinyinShort = pinyin(keyword, { toneType: 'none' })
+                .split(' ')
+                .map((word) => word.charAt(0))
+                .join('')
+                .replace(/[^a-zA-Z]/g, '')
+
+              pinyinKeyWords.push(pinyinResult, pinyinShort)
+            }
+          })
+
+          // 确定图标
+          let icon = 'plugin-icon://default'
+          if (packageJson.logo) {
+            // 检查是否是 emoji
+            const isEmoji = packageJson.logo.length <= 4 && !packageJson.logo.startsWith('http')
+            icon = isEmoji ? `emoji://${packageJson.logo}` : packageJson.logo
+          }
+
+          // 确定启动路径
+          const mainFile = packageJson.main || 'index.html'
+          const actionPath = path.join(pluginPath, mainFile)
+
+          pluginApps.push({
+            name: packageJson.name,
+            desc: packageJson.description || '',
+            type: 'plugin',
+            icon,
+            keyWords: [...keyWords, ...pinyinKeyWords],
+            action: actionPath,
+            isPlugin: true,
+            pluginPath
+          })
+        } catch (error) {
+          console.error(`解析插件 ${pluginDir} 的 package.json 失败:`, error)
+        }
+      } else {
+        console.log(`插件 ${pluginDir} 没有 package.json 文件`)
+      }
+    }
+  } catch (error) {
+    console.error('获取插件列表失败:', error)
+  }
+
+  console.log(
+    `找到 ${pluginApps.length} 个插件:`,
+    pluginApps.map((app) => app.name)
+  )
+  return pluginApps
 }
 
 // 导出模块函数
