@@ -20,7 +20,7 @@ export default defineConfig({
         ]
       }
     ],
-    socialLinks: [{ icon: 'github', link: 'https://github.com/vuejs/vitepress' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/Flame-Y/electron-menu' }],
     footer: {
       message: '基于 MIT 许可发布',
       copyright: `Copyright © ${new Date().getFullYear()} Flame_Y`

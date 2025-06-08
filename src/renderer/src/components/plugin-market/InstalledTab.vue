@@ -2,12 +2,33 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { pluginConfig } from '../../../plugins/config'
 import { useConfirm } from '../../composables/useConfirm'
+import { useLoading } from '../../composables/useLoading'
 
-declare const window: Window & typeof globalThis & { electron: { ipcRenderer: any } }
+interface Plugin {
+  id: string
+  name: string
+  description?: string
+  pluginType?: string
+  indexPath?: string
+  preload?: string
+  logo?: string
+}
 
-const installedPlugins = ref<any[]>([])
+declare const window: Window & typeof globalThis & {
+  electron: {
+    ipcRenderer: {
+      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
+      on: (channel: string, listener: (...args: unknown[]) => void) => void
+      removeListener: (channel: string, listener: (...args: unknown[]) => void) => void
+      send: (channel: string, ...args: unknown[]) => void
+    }
+  }
+}
+
+const installedPlugins = ref<Plugin[]>([])
 const activePluginId = ref<string | null>(null)
 const { confirm } = useConfirm()
+const { showLoading, hideLoading } = useLoading()
 
 const fetchInstalledPlugins = async () => {
   try {
@@ -58,13 +79,13 @@ const unloadPlugin = async (pluginId: string) => {
 }
 
 // 处理插件关闭事件
-const handlePluginClosed = (_event: any, pluginId: string) => {
+const handlePluginClosed = (_event: unknown, pluginId: string) => {
   if (activePluginId.value === pluginId) {
     activePluginId.value = null
   }
 }
 
-const uninstallPlugin = async (plugin: any) => {
+const uninstallPlugin = async (plugin: Plugin) => {
   try {
     const confirmed = await confirm({
       title: '确认卸载插件',
@@ -76,7 +97,16 @@ const uninstallPlugin = async (plugin: any) => {
 
     if (!confirmed) return
 
+    // 显示卸载loading
+    showLoading({
+      title: '正在卸载插件',
+      message: `正在卸载 "${plugin.name}"，请稍候...`
+    })
+
     const result = await window.electron.ipcRenderer.invoke('uninstall-plugin', plugin.id)
+
+    hideLoading()
+
     if (result.success) {
       await fetchInstalledPlugins()
       window.electron.ipcRenderer.send('show-notification', {
@@ -85,6 +115,7 @@ const uninstallPlugin = async (plugin: any) => {
       })
     }
   } catch (error) {
+    hideLoading()
     console.error('卸载插件失败:', error)
   }
 }
@@ -154,21 +185,17 @@ onBeforeUnmount(() => {
     <h2 class="text-lg font-medium text-gray-900 mb-4">已安装插件</h2>
     <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
       <div class="space-y-4">
-        <div
-          v-for="plugin in installedPlugins"
-          :key="plugin.id"
-          class="bg-gray-50 p-4 rounded-lg relative group hover:bg-gray-100 transition-colors"
-        >
+        <div v-for="plugin in installedPlugins" :key="plugin.id"
+          class="bg-gray-50 p-4 rounded-lg relative group hover:bg-gray-100 transition-colors">
           <button
             class="absolute top-[-5px] right-[-5px] w-3 h-3 rounded-full bg-gray-400 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center text-xs z-10"
-            title="卸载插件"
-            @click.stop="uninstallPlugin(plugin)"
-          >
+            title="卸载插件" @click.stop="uninstallPlugin(plugin)">
             ×
           </button>
 
           <div class="flex items-center">
-            <div :ref="(el) => setPluginLogo(el, plugin.logo)" class="w-10 h-10 rounded-full"></div>
+            <div :ref="(el) => setPluginLogo(el as HTMLElement, plugin.logo || '')" class="w-10 h-10 rounded-full">
+            </div>
             <div class="ml-3 flex-1">
               <h3 class="text-sm font-medium text-gray-900 text-left">{{ plugin.name }}</h3>
               <p class="text-xs text-gray-500 mt-1 text-left">
@@ -176,17 +203,13 @@ onBeforeUnmount(() => {
               </p>
             </div>
             <div class="flex items-center">
-              <button
-                class="px-3 py-1 text-xs text-white rounded transition-colors"
-                :class="[
-                  activePluginId === plugin.id
-                    ? 'bg-red-500 hover:bg-red-600'
-                    : 'bg-blue-500 hover:bg-blue-600'
-                ]"
-                @click="
-                  activePluginId === plugin.id ? unloadPlugin(plugin.id) : loadPlugin(plugin.id)
-                "
-              >
+              <button class="px-3 py-1 text-xs text-white rounded transition-colors" :class="[
+                activePluginId === plugin.id
+                  ? 'bg-red-500 hover:bg-red-600'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              ]" @click="
+                activePluginId === plugin.id ? unloadPlugin(plugin.id) : loadPlugin(plugin.id)
+                ">
                 {{ activePluginId === plugin.id ? '停止' : '运行' }}
               </button>
             </div>

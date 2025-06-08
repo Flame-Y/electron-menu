@@ -4,7 +4,9 @@ import AppSearch from './components/AppSearch.vue'
 import PluginMarket from './components/PluginMarket.vue'
 import SearchResultsList from './components/SearchResultsList.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import LoadingDialog from './components/LoadingDialog.vue'
 import { useConfirm } from './composables/useConfirm'
+import { useLoading } from './composables/useLoading'
 
 defineOptions({
   name: 'App'
@@ -15,6 +17,9 @@ const searchResultsRef = ref()
 
 // 使用确认组件
 const { confirmState, handleConfirm, handleCancel } = useConfirm()
+
+// 使用加载组件
+const { loadingState } = useLoading()
 
 const togglePlugins = async () => {
   showPlugins.value = !showPlugins.value
@@ -48,45 +53,31 @@ const handleSearch = (keyword: string) => {
       <!-- 菜单图标 -->
       <div
         class="flex items-center cursor-pointer px-2 h-7 rounded-lg hover:bg-gray-100 no-drag transition-all duration-300"
-        :class="{ 'bg-indigo-50/80': showPlugins }"
-        @click="togglePlugins"
-      >
+        :class="{ 'bg-indigo-50/80': showPlugins }" @click="togglePlugins">
         <span class="text-2xl">🥒</span>
 
-        <span
-          class="ml-1 text-sm text-gray-500 transition-all duration-200 w-0 overflow-hidden whitespace-nowrap"
-          :class="{ 'w-[4em]': showPlugins }"
-          >插件市场</span
-        >
+        <span class="ml-1 text-sm text-gray-500 transition-all duration-200 w-0 overflow-hidden whitespace-nowrap"
+          :class="{ 'w-[4em]': showPlugins }">插件市场</span>
       </div>
       <!-- 搜索组件 -->
       <AppSearch @search="handleSearch" @toggle-plugins="togglePlugins" />
     </div>
     <SearchResultsList ref="searchResultsRef" class="no-drag" />
     <!-- 插件市场 -->
-    <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="transform scale-95 opacity-0"
-      enter-to-class="transform scale-100 opacity-100"
-      leave-active-class="transition duration-200 ease-in"
-      leave-from-class="transform scale-100 opacity-100"
-      leave-to-class="transform scale-95 opacity-0"
-      class="no-drag"
-    >
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="transform scale-95 opacity-0"
+      enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-200 ease-in"
+      leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0" class="no-drag">
       <PluginMarket v-if="showPlugins" class="mt-4" />
     </Transition>
 
     <!-- 确认对话框 -->
-    <ConfirmDialog
-      :show="confirmState.show"
-      :title="confirmState.title"
-      :message="confirmState.message"
-      :type="confirmState.type"
-      :confirm-text="confirmState.confirmText"
-      :cancel-text="confirmState.cancelText"
-      @confirm="handleConfirm"
-      @cancel="handleCancel"
-    />
+    <ConfirmDialog :show="confirmState.show" :title="confirmState.title" :message="confirmState.message"
+      :type="confirmState.type" :confirm-text="confirmState.confirmText" :cancel-text="confirmState.cancelText"
+      @confirm="handleConfirm" @cancel="handleCancel" />
+
+    <!-- 加载对话框 -->
+    <LoadingDialog :show="loadingState.show" :title="loadingState.title" :message="loadingState.message"
+      :show-progress="loadingState.showProgress" :progress="loadingState.progress" />
   </div>
 </template>
 
